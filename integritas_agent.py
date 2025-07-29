@@ -31,6 +31,21 @@ class HashRequest(BaseModel):
     hash: str = Field(
         description="The hash data that needs to be processed by the integritas agent."
     )
+
+# Define the data model for verification requests from other agents
+class VerifyRequest(BaseModel):
+    proof: str = Field(
+        description="The proof to verify"
+    )
+    root: str = Field(
+        description="The root to verify"
+    )
+    address: str = Field(
+        description="The address to verify"
+    )
+    data: str = Field(
+        description="The data to verify"
+    )
  
  
 # Define the data model for responses sent back to other agents
@@ -53,6 +68,30 @@ class StampResponse(BaseModel):
     success: bool = Field(
         description="Whether the hash was successfully stamped",
         default=False
+    )
+
+class VerifyResponse(BaseModel):
+    apiVersion: int = Field(
+        description="API version number",
+        default=1
+    )
+    requestId: str = Field(
+        description="Request ID for tracking"
+    )
+    status: str = Field(
+        description="Status of the verification request"
+    )
+    statusCode: int = Field(
+        description="HTTP status code"
+    )
+    message: str = Field(
+        description="Response message from the verification"
+    )
+    timestamp: str = Field(
+        description="Timestamp of the verification response"
+    )
+    data: dict = Field(
+        description="Verification data containing fileHash, result, blockchain_data, etc."
     )
  
 # Event handler that runs when the agent starts up
@@ -256,25 +295,49 @@ async def process_hash(ctx: Context, sender: str, msg: HashRequest):
             sender, StampResponse(message=response_message, proof="", root="", address="", data="", success=False)
         )
 
-class VerifyResponse(BaseModel):
-    response: str = Field(
-        description="The response from the integritas agent"
-    )
+@agent.on_message(model=VerifyRequest, replies=VerifyResponse)
+async def handle_verify_request(ctx: Context, sender: str, msg: VerifyRequest):
+    # Log the incoming verify request and who sent it
+    ctx.logger.info(f"Received verify request from {sender}: Proof={msg.proof[:10]}... Root={msg.root[:10]}... Address={msg.address[:10]}...")
 
-@agent.on_message(model=StampResponse)
-async def handle_response(ctx: Context, sender: str, data: StampResponse):
-    # Log the response received from the integritas agent
-    ctx.logger.info(f"Got response from integritas agent: {data.message}")
-    
-    if data.success:
-        res = verify_proof(data.proof, data.root, data.address, data.data)
- 
-        ctx.logger.info(f"Proof: {data.proof} Root: {data.root} Address: {data.address} Data: {data.data}")
+    # Verify the proof using Integritas API
+    res = verify_proof(msg.proof, msg.root, msg.address, msg.data)
+
+    if res and isinstance(res, dict):
+        ctx.logger.info(f"Proof verified successfully. Sending response to verify client")
+        # Extract the actual data from the Integritas API response
+        api_version = res.get("apiVersion", 1)
+        request_id = res.get("requestId", f"verify-{sender[:8]}")
+        status = res.get("status", "success")
+        status_code = res.get("statusCode", 200)
+        message = res.get("message", "Verification complete")
+        timestamp = res.get("timestamp", "")
+        data = res.get("data", {})
+        
         await ctx.send(
-            sender, VerifyResponse(response=str(res))
+            sender, VerifyResponse(
+                apiVersion=api_version,
+                requestId=request_id,
+                status=status,
+                statusCode=status_code,
+                message=message,
+                timestamp=timestamp,
+                data=data
+            )
         )
     else:
-        ctx.logger.error("Proof could not be sent")
+        ctx.logger.error("Proof verification failed.")
+        await ctx.send(
+            sender, VerifyResponse(
+                apiVersion=1,
+                requestId=f"verify-{sender[:8]}",
+                status="error",
+                statusCode=400,
+                message="Proof verification failed",
+                timestamp="",
+                data={}
+            )
+        )
  
 # Start the agent - this will keep it running and listening for messages
 agent.run()
