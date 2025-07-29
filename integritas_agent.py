@@ -2,6 +2,7 @@
 # It acts as a service that other agents can send hash data to
 
 import os
+from dotenv import load_dotenv
 import requests
 import time
 import json
@@ -9,11 +10,14 @@ import tempfile
 from pydantic import BaseModel, Field
 from uagents import Agent, Context, Protocol, Model
 
+
+load_dotenv()
+
 # Configuration for the integritas service
 # Integritas API configuration
 INTEGRITAS_BASE_URL = "https://integritas.minima.global/core"
-INTEGRITAS_API_KEY = os.environ["INTEGRITAS_API_KEY"] # Move to .env file
- 
+INTEGRITAS_API_KEY = os.getenv("INTEGRITAS_API_KEY") 
+
 # Create the integritas agent with a unique name, seed, and endpoint
 agent = Agent(name="integritas_agent",
               seed="your seed value",
