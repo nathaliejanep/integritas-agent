@@ -202,15 +202,6 @@ The system includes comprehensive error handling:
 - Use HTTPS for all communications
 - Regularly rotate API keys
 
-## Troubleshooting
-
-### Common Issues
-
-1. **Port Conflicts**: Ensure each agent uses a unique port
-2. **API Key Issues**: Verify your Integritas API key is valid
-3. **Network Connectivity**: Check connectivity to Integritas API
-4. **Agent Address**: Ensure correct agent addresses in client configurations
-
 ### Debug Mode
 
 Enable debug logging by modifying the agent configuration:
@@ -218,26 +209,6 @@ Enable debug logging by modifying the agent configuration:
 ```python
 agent = Agent(name="debug_agent", seed="debug_seed", port=8000, debug=True)
 ```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
-
-## License
-
-[Add your license information here]
-
-## Support
-
-For issues and questions:
-
-- Check the troubleshooting section
-- Review the Integritas API documentation
-- Open an issue in the repository
 
 ## Changelog
 
