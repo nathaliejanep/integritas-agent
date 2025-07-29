@@ -12,7 +12,7 @@ from uagents import Agent, Context, Protocol, Model
 # Configuration for the integritas service
 # Integritas API configuration
 INTEGRITAS_BASE_URL = "https://integritas.minima.global/core"
-INTEGRITAS_API_KEY = ""  # Move to .env file
+INTEGRITAS_API_KEY = os.environ["INTEGRITAS_API_KEY"] # Move to .env file
  
 # Create the integritas agent with a unique name, seed, and endpoint
 agent = Agent(name="integritas_agent",
