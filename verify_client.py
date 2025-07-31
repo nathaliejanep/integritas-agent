@@ -40,8 +40,33 @@ class StampResponse(BaseModel):
     )
 
 class VerifyResponse(BaseModel):
-    response: str = Field(
-        description="The response from the integritas agent"
+    api_version: int = Field(
+        description="API version number",
+        default=1
+    )
+    request_id: str = Field(
+        description="Request identifier",
+        default=""
+    )
+    status: str = Field(
+        description="Status of the verification (success/failure)",
+        default=""
+    )
+    status_code: int = Field(
+        description="HTTP status code",
+        default=0
+    )
+    message: str = Field(
+        description="Human-readable message about the verification result",
+        default=""
+    )
+    timestamp: str = Field(
+        description="Timestamp of the verification",
+        default=""
+    )
+    data: dict = Field(
+        description="The verification data containing file hash, blockchain data, etc.",
+        default_factory=dict
     )
 
 @agent.on_event("startup")
@@ -49,6 +74,7 @@ async def print_address(ctx: Context):
     # Log the agent's unique address so other agents know where to send messages
     ctx.logger.info(agent.address)
 
+# 4. Message handler that processes stamp response from the client agent and sends response back to integritas agent
 @agent.on_message(model=StampResponse)
 async def handle_response(ctx: Context, sender: str, data: StampResponse):
     if data.success:
@@ -61,7 +87,7 @@ async def handle_response(ctx: Context, sender: str, data: StampResponse):
 
 @agent.on_message(model=VerifyResponse)
 async def handle_response(ctx: Context, sender: str, data: VerifyResponse):
-    ctx.logger.info(f"Got response from integritas agent: {data.response}")
+    ctx.logger.info(f"Got response from integritas agent: {data}")
 
 # Start the agent - this will keep it running and listening for messages
 if __name__ == "__main__":

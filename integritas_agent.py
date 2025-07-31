@@ -54,7 +54,37 @@ class StampResponse(BaseModel):
         description="Whether the hash was successfully stamped",
         default=False
     )
- 
+
+class VerifyResponse(BaseModel):
+    api_version: int = Field(
+        description="API version number",
+        default=1
+    )
+    request_id: str = Field(
+        description="Request identifier",
+        default=""
+    )
+    status: str = Field(
+        description="Status of the verification (success/failure)",
+        default=""
+    )
+    status_code: int = Field(
+        description="HTTP status code",
+        default=0
+    )
+    message: str = Field(
+        description="Human-readable message about the verification result",
+        default=""
+    )
+    timestamp: str = Field(
+        description="Timestamp of the verification",
+        default=""
+    )
+    data: dict = Field(
+        description="The verification data containing file hash, blockchain data, etc.",
+        default_factory=dict
+    )
+
 # Event handler that runs when the agent starts up
 @agent.on_event("startup")
 async def print_address(ctx: Context):
@@ -207,7 +237,7 @@ def verify_proof(proof: str, root: str, address: str, data: str, request_id: str
         print(f"Error verifying proof: {str(e)}")
         return False
 
-# Message handler that processes incoming hash data from other agents
+# 2. Message handler that processes incoming hash data from client agent and sends response back to client
 @agent.on_message(model=HashRequest, replies=StampResponse)
 async def process_hash(ctx: Context, sender: str, msg: HashRequest):
     # Log the incoming hash and who sent it
@@ -256,12 +286,9 @@ async def process_hash(ctx: Context, sender: str, msg: HashRequest):
             sender, StampResponse(message=response_message, proof="", root="", address="", data="", success=False)
         )
 
-class VerifyResponse(BaseModel):
-    response: str = Field(
-        description="The response from the integritas agent"
-    )
 
-@agent.on_message(model=StampResponse)
+# 5. Message handler that processes stamp response, verifies proof and sends result response back to verify_client if success
+@agent.on_message(model=StampResponse, replies=VerifyResponse)
 async def handle_response(ctx: Context, sender: str, data: StampResponse):
     # Log the response received from the integritas agent
     ctx.logger.info(f"Got response from integritas agent: {data.message}")
@@ -270,9 +297,31 @@ async def handle_response(ctx: Context, sender: str, data: StampResponse):
         res = verify_proof(data.proof, data.root, data.address, data.data)
  
         ctx.logger.info(f"Proof: {data.proof} Root: {data.root} Address: {data.address} Data: {data.data}")
-        await ctx.send(
-            sender, VerifyResponse(response=str(res))
-        )
+        if res and isinstance(res, dict):
+            await ctx.send(
+                sender, VerifyResponse(
+                    api_version=res.get("apiVersion", 1),
+                    request_id=f"verify-{sender[:8]}",
+                    status="success",
+                    status_code=200,
+                    message="Proof verification completed successfully",
+                    timestamp=res.get("timestamp", ""),
+                    data=res.get("data", {})
+                )
+            )
+        else:
+            # Verification failed
+            await ctx.send(
+                sender, VerifyResponse(
+                    api_version=1,
+                    request_id=f"verify-{sender[:8]}",
+                    status="error",
+                    status_code=500,
+                    message="Proof verification failed",
+                    timestamp="",
+                    data={}
+                )
+            )
     else:
         ctx.logger.error("Proof could not be sent")
  

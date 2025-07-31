@@ -50,7 +50,7 @@ class Start(BaseModel):
         description="The message to send to the integritas agent"
     )
  
-# Event handler that runs when the client agent starts up
+# 1. Event handler that sends hash when client agent starts up
 @agent.on_event("startup") # Real scenario would be on message from something?
 async def send_hash(ctx: Context):
     # Log what hash we're about to send
@@ -67,7 +67,7 @@ async def send_hash(ctx: Context):
     )
  
  
-# Message handler that processes responses from the integritas agent
+# 3. Message handler that processes stamp response from the integritas agent and sends response back to verify_client if success
 @agent.on_message(model=StampResponse)
 async def handle_response(ctx: Context, sender: str, data: StampResponse):
     # Log the response received from the integritas agent
@@ -81,20 +81,21 @@ async def handle_response(ctx: Context, sender: str, data: StampResponse):
     else:
         ctx.logger.error("Hash stamping failed!")
 
-@agent.on_message(model=Start)
-async def send_hash(ctx: Context):
-    # Log what hash we're about to send
-    ctx.logger.info(
-        f"Sending hash to integritas agent: {HASH_TO_SEND}"
-    )
-    
-    # if booking made, send hash to integritas agent
 
-    # Send the hash to the integritas agent
-    # The address below is the integritas agent's unique address (from integritas_agent.py startup log)
-    await ctx.send(
-        'agent1qdpzrc02a8lnlzaahtdyy3wnaux64pqa22vykp59tx67jx2mmy3dzf249jk', HashRequest(hash=HASH_TO_SEND)
-    )
+# @agent.on_message(model=Start)
+# async def send_hash(ctx: Context):
+#     # Log what hash we're about to send
+#     ctx.logger.info(
+#         f"Sending hash to integritas agent: {HASH_TO_SEND}"
+#     )
+    
+#     # if booking made, send hash to integritas agent
+
+#     # Send the hash to the integritas agent
+#     # The address below is the integritas agent's unique address (from integritas_agent.py startup log)
+#     await ctx.send(
+#         'agent1qdpzrc02a8lnlzaahtdyy3wnaux64pqa22vykp59tx67jx2mmy3dzf249jk', HashRequest(hash=HASH_TO_SEND)
+#     )
 
 # Start the client agent - this will send the hash and wait for the response
 agent.run()
