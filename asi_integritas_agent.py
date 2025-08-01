@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import uuid4
 import json
- 
+import os
 from openai import OpenAI
 from uagents import Context, Protocol, Agent
 from uagents_core.contrib.protocols.chat import (
@@ -22,6 +22,7 @@ from asi1_utils import format_response
 ## on the blockchain using the Integritas API. The agent will return the UID
 ## for successful stamping operations. This agent is compatible with ASI:One
 ## and acts as an expert in blockchain hash stamping and validation.
+ASI_API_KEY = os.getenv("ASI_API_KEY")
 
 # the subject that this assistant is an expert in
 subject_matter = "blockchain hash stamping and validation using the Integritas API"
@@ -32,13 +33,13 @@ client = OpenAI(
     base_url='https://api.asi1.ai/v1',
     
     # You can get an ASI-1 api key by creating an account at https://asi1.ai/dashboard/api-keys
-    api_key='sk_9223d01102dc4ded93998ad9499e96acefca5b523dbb46008e99c45c4e6db791',  # Replace with your actual ASI:One API key
+    api_key=ASI_API_KEY,
 )
 
 # Create the agent
 agent = Agent(
     name="asi_integritas_agent",
-    seed="your seed value2",
+    seed="your seed value2", # TODO: change this to a random seed
     port=8000,
     endpoint=["https://agentverse.ai/v1/submit"],
     mailbox=True,
