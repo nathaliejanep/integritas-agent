@@ -123,7 +123,8 @@ def verify_proof(proof: str, root: str, address: str, data: str, request_id: str
         url = f"{INTEGRITAS_BASE_URL}/v1/verify/post-lite"
         headers = {
             "x-api-key": INTEGRITAS_API_KEY,
-            "x-report-required": "true"
+            "x-report-required": "true",
+            "x-request-id": request_id
         }
         
         # Create the JSON payload
