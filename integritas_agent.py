@@ -9,6 +9,7 @@ import json
 import tempfile
 from pydantic import BaseModel, Field
 from uagents import Agent, Context, Protocol, Model
+from uagents_core.contrib.protocols.chat import chat_protocol_spec
 
 # Import utility functions from separate file
 from integritas_utils import stamp_hash, wait_for_onchain_status, verify_proof
@@ -28,7 +29,10 @@ agent = Agent(name="integritas_agent",
               endpoint=["http://127.0.0.1:8000/submit"]
               )
  
- 
+ # We create a new protocol which is compatible with the chat protocol spec. This ensures
+# compatibility between agents
+protocol = Protocol(spec=chat_protocol_spec)
+
 # Define the data model for incoming hash data from other agents
 class HashRequest(BaseModel):
     hash: str = Field(
@@ -60,30 +64,15 @@ class StampResponse(BaseModel):
 
 # REST endpoint models for Postman integration
 class RestHashRequest(Model):
-    hash: str = Field(
-        description="The hash data that needs to be processed by the integritas agent."
-    )
+    hash: str
 
 class RestHashResponse(Model):
-    message: str = Field(
-        description="The response message from integritas agent"
-    )
-    proof: str = Field(
-        description="The proof returned from Integritas API if successful, empty string if failed",
-    )
-    root: str = Field(
-        description="The root returned from Integritas API if successful, empty string if failed",
-    )
-    address: str = Field(
-        description="The address returned from Integritas API if successful, empty string if failed",
-    )
-    data: str = Field(
-        description="The data returned from Integritas API if successful, empty string if failed",
-    )
-    success: bool = Field(
-        description="Whether the hash was successfully stamped",
-        default=False
-    )
+    message: str
+    proof: str
+    root: str
+    address: str
+    data: str
+    success: bool = False
 
 class VerifyResponse(BaseModel):
     api_version: int = Field(
@@ -114,6 +103,24 @@ class VerifyResponse(BaseModel):
         description="The verification data containing file hash, blockchain data, etc.",
         default_factory=dict
     )
+
+class AsiOneRequestMessage(Model):
+    intent: str
+    content: str
+    risk_threshold: str
+    request_action_suggestions: bool
+
+class FileMessageRequest(Model):
+    message: str
+
+class FileMessageResponse(Model):
+    message: str
+
+class ActionRequest(Model):
+    action: str
+
+class ActionResponse(Model):
+    action: str
 
 # Event handler that runs when the agent starts up
 @agent.on_event("startup")
@@ -208,6 +215,110 @@ async def handle_rest_stamp_hash(ctx: Context, req: RestHashRequest) -> RestHash
             success=False
         )
 
+@agent.on_rest_post("/user-input", FileMessageRequest, FileMessageResponse)
+async def handle_user_input(ctx: Context, req: FileMessageRequest) -> FileMessageResponse:
+    """
+    REST endpoint to handle user input from the client agent.
+    """
+    ctx.logger.info(f"Received user input: {req.message}")
+    await ctx.send(
+        "asi1@fetch.ai",  # My A2A address
+        message=AsiOneRequestMessage(
+            intent="decide whether to stamp hash or verify, or give reason for failure, respond with an object with the key 'action' and the value 'stamp' or 'verify' or 'reason for failure'",
+            content=req.message,
+            risk_threshold="medium",
+            request_action_suggestions=True
+        )
+    )
+    return FileMessageResponse(message="User input received")
+
+@agent.on_message(model=ActionRequest, replies=ActionResponse)
+async def handle_action(ctx: Context, sender: str, msg: ActionRequest):
+    ctx.logger.info(f"✅ Got ASI:One's analysis: {msg}")
+    if msg.action == "stamp":
+        ctx.logger.info(f"✅ Action: STAMP - Need to implement stamping logic")
+        # TODO: Implement stamping logic here
+        # You would need to get the hash from somewhere (maybe from a previous message or context)
+        # uid = stamp_hash(hash_value, f"agent-{sender[:8]}")
+        # Then handle the onchain confirmation and send response
+    elif msg.action == "verify":
+        ctx.logger.info(f"✅ Action: VERIFY - Need to implement verification logic")
+        # TODO: Implement verification logic here
+    elif msg.action == "reason for failure":
+        ctx.logger.info(f"✅ Action: REASON FOR FAILURE - {msg.action}")
+    else:
+        ctx.logger.warning(f"❌ Unknown action: {msg.action}")
+    
+    # Send response back to the sender
+    await ctx.send(sender, ActionResponse(action=msg.action))
+# async def handle_rest_stamp_hash(ctx: Context, req: RestHashRequest) -> RestHashResponse:
+#     """
+#     REST endpoint to stamp a hash using Integritas API.
+#     Accepts hash data from Postman and returns the stamping result.
+#     """
+#     ctx.logger.info(f"Received REST request to stamp hash: {req.hash}")
+    
+#     # Try to stamp the hash using Integritas API
+#     uid = stamp_hash(req.hash, f"rest-postman-{int(time.time())}")
+    
+#     if uid:
+#         # Hash was successfully submitted, now wait for onchain confirmation
+#         ctx.logger.info(f"Hash submitted with UID: {uid}, waiting for onchain confirmation...")
+        
+#         # Wait for the hash to be confirmed onchain
+#         onchain_result = wait_for_onchain_status(uid)
+#         print(f"Onchain result: {onchain_result}")
+
+#         if onchain_result["onchain"]:
+#             # Hash was successfully stamped and confirmed onchain
+#             response_message = f"Hash stamped and confirmed onchain! UID: {uid}"
+#             ctx.logger.info(f"Hash confirmed onchain with UID: {uid}")
+
+#             verify_client_address = 'agent1qwrv654kc3axm53mp2yc0e22kxafhju8htk2u5sltwez3088tkdrkhxu0er'
+            
+#             await ctx.send(
+#                 verify_client_address, StampResponse(
+#                     message=response_message, 
+#                     proof=onchain_result["proof"], 
+#                     root=onchain_result["root"], 
+#                     address=onchain_result["address"], 
+#                     data=onchain_result["data"], 
+#                     success=True
+#                 )
+#             )
+#             return RestHashResponse(
+#                 message=response_message, 
+#                 proof=onchain_result["proof"], 
+#                 root=onchain_result["root"], 
+#                 address=onchain_result["address"], 
+#                 data=onchain_result["data"], 
+#                 success=True
+#             )
+#         else:
+#             # Hash was submitted but not confirmed onchain within timeout
+#             response_message = f"Hash submitted but not confirmed onchain within timeout. UID: {uid}"
+#             ctx.logger.warning(f"Hash not confirmed onchain within timeout. UID: {uid}")
+#             return RestHashResponse(
+#                 message=response_message, 
+#                 proof="", 
+#                 root="", 
+#                 address="", 
+#                 data="", 
+#                 success=False
+#             )
+#     else:
+#         # Stamping failed
+#         response_message = f"Failed to stamp hash: {req.hash}"
+#         ctx.logger.error(f"Failed to stamp hash: {req.hash}")
+#         return RestHashResponse(
+#             message=response_message, 
+#             proof="", 
+#             root="", 
+#             address="", 
+#             data="", 
+#             success=False
+#         )
+        
 # 2. Message handler that processes incoming hash data from client agent and sends response back to client
 # @agent.on_message(model=HashRequest, replies=StampResponse)
 # async def process_hash(ctx: Context, sender: str, msg: HashRequest):

@@ -1,0 +1,7 @@
+uagents
+uagents-core
+openai
+pydantic
+requests
+python-dotenv 
+uuid
