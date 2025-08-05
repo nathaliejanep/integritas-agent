@@ -98,13 +98,14 @@ def format_final_hash_response(proof_data):
     # Format the JSON for display
     json_content = json.dumps(proof_data, indent=2)
 
-    final_response = '''🎉 Confirmed on blockchain!
+    final_response = f'''🎉 Confirmed on blockchain!
 
-        Your hash has been successfully confirmed on the blockchain. This proof data can be used for later verification on the blockchain. 
-        Proof Data:
-        ```json
-        ''' + json_content + '''
-        ```
-    '''
+Your hash has been successfully confirmed on the blockchain. This proof data can be used for later verification on the blockchain.
+
+**Proof Data:**
+```json
+{json_content}
+```
+'''
     
     return final_response
