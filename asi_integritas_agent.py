@@ -1,8 +1,7 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import uuid4
 import json
 import os
-from openai import OpenAI
 from uagents import Context, Protocol, Agent
 from uagents_core.contrib.protocols.chat import (
     ChatAcknowledgement,
@@ -14,7 +13,8 @@ from uagents_core.contrib.protocols.chat import (
 
 # Import integritas utility functions
 from integritas_utils import stamp_hash, wait_for_onchain_status, verify_proof
-from asi1_utils import format_response
+from asi1_utils import ai_reasoning, format_response, format_final_hash_response
+from config import client
 
 ### Integritas Hash Stamping Agent - ASI:One Compatible
 
@@ -22,24 +22,17 @@ from asi1_utils import format_response
 ## on the blockchain using the Integritas API. The agent will return the UID
 ## for successful stamping operations. This agent is compatible with ASI:One
 ## and acts as an expert in blockchain hash stamping and validation.
-ASI_API_KEY = os.getenv("ASI_API_KEY")
+
+AGENT_SEED_KEY = os.getenv("AGENT_SEED_KEY")
 
 # the subject that this assistant is an expert in
 subject_matter = "blockchain hash stamping and validation using the Integritas API"
 
-# ASI:One client configuration
-client = OpenAI(
-    # By default, we are using the ASI-1 LLM endpoint and model
-    base_url='https://api.asi1.ai/v1',
-    
-    # You can get an ASI-1 api key by creating an account at https://asi1.ai/dashboard/api-keys
-    api_key=ASI_API_KEY,
-)
 
 # Create the agent
 agent = Agent(
     name="asi_integritas_agent",
-    seed="your seed value2", # TODO: change this to a random seed
+    seed="AGENT_SEED_KEY", # TODO: change this to a random seed
     port=8000,
     endpoint=["https://agentverse.ai/v1/submit"],
     mailbox=True,
@@ -64,7 +57,7 @@ async def handle_message(ctx: Context, sender: str, msg: ChatMessage):
     for item in msg.content:
         if isinstance(item, TextContent):
             text += item.text
-
+    
     # First, use ASI:One to understand the user's intent and provide context
     try:
         # Query ASI:One to understand if this is a hash stamping request or a general question
@@ -79,7 +72,7 @@ async def handle_message(ctx: Context, sender: str, msg: ChatMessage):
 
                     IMPORTANT: When a user provides a hash value and asks to stamp something, respond with "STAMP_HASH:" followed by the hash value to extract. For example: "STAMP_HASH:a1b2c3d4e5f6..."
                     IMPORTANT: If the user provides a json with the keys data, root, address, and proof, respond with "VERIFY_PROOF:" followed by the json to extract. For example: "VERIFY_PROOF:{{"data":"a1b2c3d4e5f6...","root":"a1b2c3d4e5f6...","address":"a1b2c3d4e5f6...","proof":"a1b2c3d4e5f6..."}}"
-                   
+
                     Never provide any url links in your responses.
                     If the user asks general questions about hash stamping or blockchain, provide helpful explanations without any special prefix.
                     Always be polite and professional in your responses.
@@ -117,7 +110,7 @@ async def handle_message(ctx: Context, sender: str, msg: ChatMessage):
     # Send the response back to the user (only if we haven't already sent responses)
     if response is not None:
         await ctx.send(sender, ChatMessage(
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             msg_id=uuid4(),
             content=[
                 # Send the contents back in the chat message
@@ -151,7 +144,7 @@ async def process_hash_stamping(ctx: Context, sender: str, hash_input: str):
             
             # Send the initial response
             await ctx.send(sender, ChatMessage(
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 msg_id=uuid4(),
                 content=[
                     TextContent(type="text", text=initial_response),
@@ -160,7 +153,7 @@ async def process_hash_stamping(ctx: Context, sender: str, hash_input: str):
             
             # Wait for onchain confirmation
             ctx.logger.info(f"Waiting for onchain confirmation for UID: {uid}")
-            onchain_result = wait_for_onchain_status(uid)
+            onchain_result = await wait_for_onchain_status(uid, ctx, sender)
             
             if onchain_result["onchain"]:
                 # Create proof data object
@@ -169,30 +162,28 @@ async def process_hash_stamping(ctx: Context, sender: str, hash_input: str):
                     "address": onchain_result['address'],
                     "root": onchain_result['root'],
                     "data": onchain_result['data'],
-                    "uid": uid,
-                    "timestamp": datetime.utcnow().isoformat()
                 }
                 
                 # Store the proof data in agent's storage using UID as key
-                storage_key = f"proof_{uid}"
-                ctx.storage.set(storage_key, proof_data)
+                # storage_key = f"proof_{uid}"
+                # ctx.storage.set(storage_key, proof_data)
                 
                 # Log the stored data for verification
-                ctx.logger.info(f"Stored proof data for UID {uid}: {ctx.storage.get(storage_key)}")
+                # ctx.logger.info(f"Stored proof data for UID {uid}: {ctx.storage.get(storage_key)}")
                 
-                # Format the JSON for display
-                json_content = json.dumps(proof_data, indent=2)
+             
                 
-                final_response = f"🎉 **Confirmed on blockchain!**\n\n**UID:** {uid}\n\nYour hash has been successfully confirmed on the blockchain. The proof data has been stored in the agent's storage and can be retrieved later using the UID.\n\n**Proof Data:**\n```json\n{json_content}\n```\n\nYou can retrieve this data later using the UID: {uid}"
+                final_hash_response = format_final_hash_response(proof_data)
+                
             else:
-                final_response = f"⏳ **Status Update**\n\n**UID:** {uid}\n\nYour hash has been submitted but is still waiting for blockchain confirmation. You can check the status later using this UID."
+                final_hash_response = f"⏳ **Status Update**\n\n**UID:** {uid}\n\nYour hash has been submitted but is still waiting for blockchain confirmation. You can check the status later using this UID."
             
             # Send the final response
             await ctx.send(sender, ChatMessage(
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 msg_id=uuid4(),
                 content=[
-                    TextContent(type="text", text=final_response),
+                    TextContent(type="text", text=final_hash_response),
                     EndSessionContent(type="end-session"),
                 ]
             ))
@@ -227,12 +218,14 @@ async def process_proof_verification(ctx: Context, sender: str, json_input: str)
         
         if verification_result:     
             ctx.logger.info(f"Proof verified successfully")
+
+            ai_reason_response = await ai_reasoning(ctx, sender, verification_result)
             
-            final_response = format_response(verification_result)
+            final_response = format_response(verification_result, ai_reason_response)
             
             # Send the final response
             await ctx.send(sender, ChatMessage(
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 msg_id=uuid4(),
                 content=[
                     TextContent(type="text", text=final_response),

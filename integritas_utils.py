@@ -6,7 +6,16 @@ import requests
 import time
 import json
 import tempfile
+from datetime import datetime, timezone
+from uuid import uuid4
 from dotenv import load_dotenv
+from uagents_core.contrib.protocols.chat import (
+    ChatAcknowledgement,
+    ChatMessage,
+    EndSessionContent,
+    TextContent,
+    chat_protocol_spec,
+)
 
 load_dotenv()
 
@@ -49,7 +58,8 @@ def stamp_hash(hash_value: str, request_id: str = "asi_integritas_agent-request"
         print(f"Error calling Integritas API: {str(e)}")
         return None
 
-def wait_for_onchain_status(uid: str, max_attempts: int = 10, delay_seconds: int = 10):
+async def wait_for_onchain_status(uid: str, ctx, sender, max_attempts: int = 10, delay_seconds: int = 10):
+    print(f"max_attempts={max_attempts} ({type(max_attempts)}), delay_seconds={delay_seconds} ({type(delay_seconds)})")
     """
     Poll the Integritas API to check if the hash has been confirmed on the blockchain.
     Returns True if onchain, False if failed or timeout.
@@ -97,6 +107,14 @@ def wait_for_onchain_status(uid: str, max_attempts: int = 10, delay_seconds: int
                         }
                     else:
                         print(f"Hash not yet onchain. Waiting {delay_seconds} seconds...")
+                        wait_response = f"Hash not yet onchain. Waiting {delay_seconds} seconds..."
+                        await ctx.send(sender, ChatMessage(
+                                timestamp=datetime.now(timezone.utc),
+                                msg_id=uuid4(),
+                                content=[
+                                    TextContent(type="text", text=wait_response),
+                                ]
+            ))
                         time.sleep(delay_seconds)
                         continue
                 else:
@@ -110,7 +128,7 @@ def wait_for_onchain_status(uid: str, max_attempts: int = 10, delay_seconds: int
         return {"onchain": False, "proof": "", "root": "", "address": "", "data": ""}
         
     except Exception as e:
-        print(f"Error checking onchain status: {str(e)}")
+        print(f"Error checking onchain status: {(e)}")
         return {"onchain": False, "proof": "", "root": "", "address": "", "data": ""}
 
 def verify_proof(proof: str, root: str, address: str, data: str, request_id: str = "asi_integritas_agent-request"):
