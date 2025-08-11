@@ -32,10 +32,11 @@ subject_matter = "blockchain hash stamping and validation using the Integritas A
 # Create the agent
 agent = Agent(
     name="asi_integritas_agent",
-    seed="AGENT_SEED_KEY", # TODO: change this to a random seed
+    seed=AGENT_SEED_KEY, # TODO: change this to a random seed
     port=8000,
-    endpoint=["https://agentverse.ai/v1/submit"],
+    endpoint=["https://integritas.minima.global/asi1-agent/submit"],
     mailbox=True,
+    readme_path="AGENT_README.md",
 )
 
 # Create a new protocol compatible with the chat protocol spec
