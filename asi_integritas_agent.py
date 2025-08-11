@@ -34,7 +34,7 @@ agent = Agent(
     name="asi_integritas_agent",
     seed="AGENT_SEED_KEY", # TODO: change this to a random seed
     port=8000,
-    endpoint=["https://integritas.minima.global/asi1-agent/submit"],
+    endpoint=["https://agentverse.ai/v1/submit"],
     mailbox=True,
     readme_path="AGENT_README.md",
 )
