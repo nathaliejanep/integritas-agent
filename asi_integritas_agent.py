@@ -37,7 +37,7 @@ agent = Agent(
     endpoint=["https://agentverse.ai/v1/submit"],
     mailbox=True,
     readme_path="README.md",
-    network="mainnet"
+    # network="mainnet"
 )
 
 # Create a new protocol compatible with the chat protocol spec
