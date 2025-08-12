@@ -246,7 +246,10 @@ async def process_proof_verification(ctx: Context, sender: str, json_input: str)
 @protocol.on_message(ChatAcknowledgement)
 async def handle_ack(ctx: Context, sender: str, msg: ChatAcknowledgement):
     # We are not interested in the acknowledgements for this example
-    pass
+        ctx.logger.info(
+        f"Got an acknowledgement from {sender} for {msg.acknowledged_msg_id}"
+    )
+    # pass TESTING TO PASS THIS
 
 # Attach the protocol to the agent
 agent.include(protocol, publish_manifest=True)
