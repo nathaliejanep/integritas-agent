@@ -89,6 +89,8 @@ def format_response(verification_result, ai_reason_response):
        
             "\n\n\n"
 
+            f"## Intelligent report analyzation\n\n"
+            f"(AI can make mistakes. Check important info.).\n\n---\n"
             f"{ai_reason_response}\n\n---\n"
             f"Visit [Integritas](https://integritas.minima.global/) to take your data integrity to the next level."
         )

@@ -16,6 +16,8 @@ from uagents_core.contrib.protocols.chat import (
     TextContent,
     chat_protocol_spec,
 )
+from uagents import Context, Protocol, Agent
+from asi1_utils import ai_reasoning, format_response, format_final_hash_response
 
 load_dotenv()
 
@@ -23,7 +25,82 @@ load_dotenv()
 INTEGRITAS_BASE_URL = "https://integritas.minima.global/core"
 INTEGRITAS_API_KEY = os.getenv("INTEGRITAS_API_KEY")
 
-def stamp_hash(hash_value: str, request_id: str = "asi_integritas_agent-request"):
+async def process_stamp_hash(ctx: Context, sender: str, hash_input: str):
+    """Process hash stamping requests using Integritas API"""
+    try:
+        # Basic validation - check if it looks like a hash (hex string)
+        if not hash_input:
+            return "Please provide a hash value to stamp."
+        elif len(hash_input) < 32:  # Basic length check for hash
+            return "The provided value doesn't appear to be a valid hash. Please provide a proper hash value."
+        
+        # Generate a unique request ID
+        request_id = f"chat-{sender[:8]}-{int(datetime.now().timestamp())}"
+        
+        # Try to stamp the hash using Integritas API
+        ctx.logger.info(f"Attempting to stamp hash: {hash_input}")
+        uid = await stamp_hash(hash_input, request_id)
+        print('Response from stamping hash', uid)
+        
+        if uid:
+            # Hash was successfully submitted - send initial response
+            initial_response = f"✅ Hash stamped successfully!\n\n**UID:** {uid}\n\nYour hash has been submitted to the blockchain. Now checking for onchain confirmation..."
+            
+            # Send the initial response
+            await ctx.send(sender, ChatMessage(
+                timestamp=datetime.now(timezone.utc),
+                msg_id=uuid4(),
+                content=[
+                    TextContent(type="text", text=initial_response),
+                ]
+            ))
+            
+            # Wait for onchain confirmation
+            ctx.logger.info(f"Waiting for onchain confirmation for UID: {uid}")
+            onchain_result = await wait_for_onchain_status(uid, ctx, sender)
+            
+            if onchain_result["onchain"]:
+                # Create proof data object
+                proof_data = {
+                    "proof": onchain_result['proof'],
+                    "address": onchain_result['address'],
+                    "root": onchain_result['root'],
+                    "data": onchain_result['data'],
+                }
+                
+                # Store the proof data in agent's storage using UID as key
+                # storage_key = f"proof_{uid}"
+                # ctx.storage.set(storage_key, proof_data)
+                
+                # Log the stored data for verification
+                # ctx.logger.info(f"Stored proof data for UID {uid}: {ctx.storage.get(storage_key)}")
+                
+             
+                
+                final_hash_response = format_final_hash_response(proof_data)
+                
+            else:
+                final_hash_response = f"⏳ **Status Update**\n\n**UID:** {uid}\n\nYour hash has been submitted but is still waiting for blockchain confirmation. You can check the status later using this UID."
+            
+            # Send the final response
+            await ctx.send(sender, ChatMessage(
+                timestamp=datetime.now(timezone.utc),
+                msg_id=uuid4(),
+                content=[
+                    TextContent(type="text", text=final_hash_response),
+                    EndSessionContent(type="end-session"),
+                ]
+            ))
+            return None  # Signal that we've already sent responses
+            
+        else:
+            return "❌ Failed to stamp hash. Please check your hash value and try again."
+            
+    except Exception as e:
+        ctx.logger.exception('Error processing hash stamping request')
+        return f"An error occurred while processing your request: {str(e)}"
+
+async def stamp_hash(hash_value: str, request_id: str = "asi_integritas_agent-request"):
     """
     Send a hash to Integritas API to get it stamped on the blockchain.
     Returns the UID if successful, None if failed.
@@ -130,8 +207,53 @@ async def wait_for_onchain_status(uid: str, ctx, sender, max_attempts: int = 10,
     except Exception as e:
         print(f"Error checking onchain status: {(e)}")
         return {"onchain": False, "proof": "", "root": "", "address": "", "data": ""}
+    
+async def process_verify_proof(ctx: Context, sender: str, json_input: str):
+    """Process proof verification requests using Integritas API"""
+    try:
+        # Basic validation - check if it looks like a valid json
+        if not json_input:
+            return "Please provide a valid json with the keys data, root, address, and proof."
+        elif not all(key in json_input for key in ["data", "root", "address", "proof"]):
+            return "The provided json is missing required keys. Please provide a valid json with the keys data, root, address, and proof."
+            
+        # Parse the json
+        proof_data = json.loads(json_input)
+        ctx.logger.info(f"Parsed proof data: {proof_data}")
+        
+        # Verify the proof using Integritas API
+        ctx.logger.info(f"Attempting to verify proof: {proof_data}")
+        
+        verification_result = await verify_proof(proof_data['proof'], proof_data['root'], proof_data['address'], proof_data['data'])
 
-def verify_proof(proof: str, root: str, address: str, data: str, request_id: str = "asi_integritas_agent-request"):
+        print('Response from verifying proof', verification_result)
+        
+        if verification_result:     
+            ctx.logger.info(f"Proof verified successfully")
+
+            ai_reason_response = await ai_reasoning(ctx, sender, verification_result)
+            
+            final_response = format_response(verification_result, ai_reason_response)
+            
+            # Send the final response
+            await ctx.send(sender, ChatMessage(
+                timestamp=datetime.now(timezone.utc),
+                msg_id=uuid4(),
+                content=[
+                    TextContent(type="text", text=final_response),
+                    EndSessionContent(type="end-session"),
+                ]   
+            ))
+            return None  # Signal that we've already sent responses
+            
+        else:
+            return "❌ Failed to verify proof. Please check your proof data and try again."
+            
+    except Exception as e:
+        ctx.logger.exception('Error processing proof verification request')
+        return f"An error occurred while processing your request: {str(e)}"
+
+async def verify_proof(proof: str, root: str, address: str, data: str, request_id: str = "asi_integritas_agent-request"):
     """
     Verify the proof using the Integritas API.
     Returns True if successful, False if failed.
