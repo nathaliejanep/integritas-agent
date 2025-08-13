@@ -1,0 +1,10 @@
+{
+    "alice": {
+        "identity_key": "0caa9138771f5a254733938ef15c58351de9e04af2bd5e647de38295cab0f286",
+        "wallet_key": "wM5sXZJ4FWQkVrxtmEEwjWIO6kGEWPFeHUzxaoUkNhs="
+    },
+    "bob": {
+        "identity_key": "5e4ef6fef58cf03b7ceebcb9dab19012d72419a2e96fa6395ab5a9bdaedee659",
+        "wallet_key": "3H4jCElklV5FJEJGeHnarooP55ot/UB5li/Rh74/6UY="
+    }
+}

@@ -1,220 +1,234 @@
-# Integritas Agent
+# Integritas Agent - ASI:One Compatible Blockchain Hash Stamping Agent
 
-A multi-agent system for blockchain timestamping and verification using the Integritas API. This project demonstrates how to create autonomous agents that can stamp hashes on the blockchain and verify proofs.
+## Agent Overview
 
-## Overview
+**Integritas Agent** - is a AI-powered blockchain hash stamping and validation agent that integrates with the [Integritas API](https://integritas.minima.global/) and [ASI:One](https://asi1.ai/) for intelligent blockchain operations.
 
-The Integritas Agent system consists of multiple uAgents that work together to:
+### Core Functionality
 
-- Submit hashes to the Integritas API for blockchain timestamping
-- Wait for onchain confirmation
-- Verify proofs using the Integritas verification API
-- Provide a complete workflow for hash verification
+- **Hash Stamping**: Stamps data hashes on the Minima blockchain using Integritas API
+- **Proof Verification**: Validates blockchain proofs and NFT traceability
+- **AI-Powered Reasoning**: Uses ASI:One for intelligent request processing and response generation
+- **Real-time Status Monitoring**: Polls blockchain status until confirmation
 
-## Architecture
+## 🚀 Quick Start
 
-The system includes several agents:
-
-### 1. Integritas Agent (`integritas_agent.py`)
-
-- **Port**: 8000
-- **Purpose**: Main service agent that receives hash data and processes it through the Integritas API
-- **Functions**:
-  - Stamps hashes on the blockchain
-  - Polls for onchain confirmation
-  - Verifies proofs
-  - Responds to other agents with results
-
-### 2. Client Agent (`client.py`)
-
-- **Port**: 8001
-- **Purpose**: Example client that sends hash verification requests
-- **Functions**:
-  - Sends predefined hash to the Integritas agent
-  - Handles responses and forwards results
-
-### 3. Verify Client Agent (`verify_client.py`)
-
-- **Port**: 8002
-- **Purpose**: Specialized client for proof verification
-- **Functions**:
-  - Receives stamped hash data
-  - Initiates proof verification
-  - Handles verification responses
-
-### 4. Simple Agent (`first_agent.py`)
-
-- **Port**: 8000
-- **Purpose**: Basic example agent demonstrating uAgent structure
-- **Functions**:
-  - Simple message handling
-  - Basic agent communication
-
-## Prerequisites
+### Prerequisites
 
 - Python 3.8+
-- uAgents framework
-- Integritas API key
-- Network connectivity to Integritas API
+- ASI:One API key ([Get one here](https://asi1.ai/dashboard/api-keys))
+- Integritas API key ([Get one here](https://integritas.minima.global/))
 
-## Installation
+### Installation
 
-1. **Clone the repository**:
+1. **Clone the repository**
 
    ```bash
    git clone <repository-url>
    cd integritas-agent
    ```
 
-2. **Create a virtual environment**:
+2. **Install dependencies**
 
    ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   pip install -r requirements.txt
    ```
 
-3. **Install dependencies**:
+3. **Set up environment variables**
 
    ```bash
-   pip install uagents requests pydantic
+   export AGENT_SEED_KEY="your-agent-seed-key"
+   export ASI_API_KEY="your-asi-one-api-key"
+   export INTEGRITAS_API_KEY="your-integritas-api-key"
    ```
 
-4. **Configure API Key**:
-   - Edit `integritas_agent.py`
-   - Set your Integritas API key in the `INTEGRITAS_API_KEY` variable
-   - For production, use environment variables instead of hardcoding
+4. **Run the agent**
+   ```bash
+   python3 asi_integritas_agent.py
+   ```
 
-## Configuration
+## 🔧 Configuration
 
-### API Configuration
+### Environment Variables
 
-The Integritas API configuration is in `integritas_agent.py`:
-
-```python
-INTEGRITAS_BASE_URL = "https://integritas.minima.global/core"
-INTEGRITAS_API_KEY = "your-api-key-here"  # Set your actual API key
-```
+- `AGENT_SEED_KEY`: Unique identifier for the agent
+- `ASI_API_KEY`: ASI:One API key for AI reasoning
+- `INTEGRITAS_API_KEY`: Integritas API key for blockchain operations
 
 ### Agent Configuration
 
-Each agent has configurable parameters:
+- **Name**: `asi_integritas_agent`
+- **Port**: 8000
+- **Endpoint**: `https://agentverse.ai/v1/submit`
+- **Mailbox**: Enabled for message handling
 
-- **Name**: Unique identifier for the agent
-- **Seed**: Cryptographic seed for address generation
-- **Port**: Network port for the agent
-- **Endpoint**: Webhook endpoint for receiving messages
+## 📋 Features
 
-## Usage
+### 1. Hash Stamping
 
-### Running the Integritas Agent
+The agent can stamp any hash value on the Minima blockchain:
 
-1. **Start the main Integritas agent**:
+```
+User: "Please stamp this hash: a1b2c3d4e5f6..."
+Agent: "Hash stamped successfully! UID: abc123..."
+```
 
-   ```bash
-   python integritas_agent.py
-   ```
+### 2. Proof Verification
 
-   This will start the service agent on port 8000 and log its address.
+Verify blockchain proofs with NFT traceability:
 
-2. **Start a client agent** (in a separate terminal):
-   ```bash
-   python client.py
-   ```
-   This will send a test hash to the Integritas agent.
+```
+User: "Verify this proof: {"data":"...","root":"...","address":"...","proof":"..."}"
+Agent: "Proof Verified! Your data was stamped on 2024-01-15..."
+```
 
-### Workflow Example
+### 3. AI-Powered Analysis
 
-1. **Hash Submission**: Client agent sends a hash to the Integritas agent
-2. **Stamping**: Integritas agent submits the hash to the Integritas API
-3. **Confirmation**: Agent polls for onchain confirmation
-4. **Response**: Results are sent back to the client
-5. **Verification**: Proof can be verified using the verification API
+ASI:One integration provides intelligent:
 
-### Example Hash Processing
+- Intent recognition
+- Context-aware responses
+- Blockchain data analysis
+- Professional explanations
 
-The system processes hashes through these steps:
+### 4. Real-time Monitoring
 
-1. **Initial Request**: `HashRequest` with hash data
-2. **API Submission**: Hash sent to Integritas timestamp API
-3. **Status Polling**: Agent checks for onchain confirmation
-4. **Response**: `StampResponse` with proof, root, address, and data
-5. **Verification**: Optional proof verification step
+- Automatic polling of blockchain status
+- On-chain confirmation tracking
+- Timeout handling with configurable retries
 
-## API Integration
+## Architecture
+
+### Core Components
+
+1. **`asi_integritas_agent.py`** - Main agent implementation
+
+   - Chat protocol handler
+   - ASI:One integration
+   - Request routing and processing
+
+2. **`integritas_utils.py`** - Blockchain operations
+
+   - Hash stamping functions
+   - Status polling
+   - Proof verification
+
+3. **`asi1_utils.py`** - AI reasoning utilities
+
+   - ASI:One query handling
+   - Response formatting
+   - Result analysis
+
+4. **`config.py`** - Configuration management
+
+   - ASI:One client setup
+   - API key management
+
+5. **`integritas_docs.py`** - API documentation
+   - Integritas API reference
+   - Endpoint specifications
+
+## 🔌 API Integration
 
 ### Integritas API Endpoints Used
 
-- **POST** `/v1/timestamp/post` - Submit hash for timestamping
-- **POST** `/v1/timestamp/status` - Check onchain status
-- **POST** `/v1/verify/post-lite` - Verify proofs
+- `POST /v1/timestamp/post` - Hash stamping
+- `POST /v1/timestamp/status` - Status checking
+- `POST /v1/verify` - Proof verification
 
-### Data Models
+### ASI:One Integration
 
-#### HashRequest
+- Model: `asi1-mini`
+- Base URL: `https://api.asi1.ai/v1`
+- Purpose: Intent recognition and response generation
 
-```python
-class HashRequest(BaseModel):
-    hash: str = Field(description="The hash data to be processed")
+## 💬 Usage Examples
+
+### Hash Stamping
+
+```
+User: "I want to stamp the hash of my document"
+Agent: "I can help you stamp your hash on the blockchain. Please provide the hash value you'd like to stamp."
 ```
 
-#### StampResponse
+### Proof Verification
 
-```python
-class StampResponse(BaseModel):
-    message: str = Field(description="Response message")
-    proof: str = Field(description="Proof from Integritas API")
-    root: str = Field(description="Root from Integritas API")
-    address: str = Field(description="Address from Integritas API")
-    data: str = Field(description="Data from Integritas API")
-    success: bool = Field(description="Whether stamping was successful")
+```
+User: "Can you verify this blockchain proof?"
+Agent: "I'll verify your proof against the blockchain. Please provide the proof data in JSON format."
 ```
 
-## Error Handling
+### General Questions
 
-The system includes comprehensive error handling:
+```
+User: "How does blockchain hash stamping work?"
+Agent: "Blockchain hash stamping creates an immutable timestamp of your data on the blockchain..."
+```
 
-- API call failures
-- Network timeouts
-- Invalid responses
-- Onchain confirmation timeouts
+## Response Format
+
+### Successful Hash Stamping
+
+```
+✅ Hash stamped successfully!
+UID: abc123def456...
+Status: Processing on blockchain
+```
+
+### Successful Proof Verification
+
+```
+Proof Verified!
+
+## Verification Report
+| Result | full match |
+| Date   | 2024-01-15 |
+| Block  | 12345 |
+| NFT Proof | Verification ID |
+
+Your data was successfully verified on the blockchain...
+```
 
 ## Development
 
-### Adding New Agents
+### Project Structure
 
-1. Create a new Python file following the agent pattern
-2. Define your data models using Pydantic
-3. Implement message handlers using `@agent.on_message`
-4. Configure the agent with unique name, seed, and port
-
-### Testing
-
-1. Start the Integritas agent
-2. Run client agents to test the workflow
-3. Monitor logs for successful hash processing
-4. Verify results using the Integritas API directly
-
-## Security Considerations
-
-- Store API keys securely (use environment variables)
-- Validate all incoming data
-- Implement rate limiting for API calls
-- Use HTTPS for all communications
-- Regularly rotate API keys
-
-### Debug Mode
-
-Enable debug logging by modifying the agent configuration:
-
-```python
-agent = Agent(name="debug_agent", seed="debug_seed", port=8000, debug=True)
+```
+integritas-agent/
+├── asi_integritas_agent.py    # Main agent
+├── integritas_utils.py        # Blockchain utilities
+├── asi1_utils.py             # AI utilities
+├── config.py                 # Configuration
+├── integritas_docs.py        # API documentation
+├── requirements.txt          # Dependencies
+└── README.md                # This file
 ```
 
-## Changelog
+### Dependencies
 
-### Version 1.0.0
+- `uagents` - Agent framework
+- `uagents-core` - Core agent functionality
+- `openai` - ASI:One client
+- `requests` - HTTP client
+- `python-dotenv` - Environment management
 
-- Initial release
-- Basic hash stamping functionality
-- Multi-agent communication
-- Proof verification support
+## 🔒 Security
+
+- API keys are managed via environment variables
+- No hardcoded credentials
+- Secure request ID generation
+- Error handling for failed operations
+
+## 📞 Support
+
+- **Integritas Documentation**: [https://docs.integritas.minima.global/](https://docs.integritas.minima.global/)
+- **ASI:One Documentation**: [https://docs.asi1.ai/docs](https://docs.asi1.ai/docs)
+- **Minima Documentation**: [https://docs.minima.global/](https://docs.minima.global/)
+
+---
+
+**Agent Type**: Integritas Blockchain Hash Stamping Agent  
+**AI Integration**: ASI:One  
+**Blockchain**: Minima  
+**Primary Function**: Hash stamping and proof verification  
+**Protocol**: Chat-based interaction with blockchain operations

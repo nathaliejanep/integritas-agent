@@ -23,7 +23,7 @@ from config import client
 ## for successful stamping operations. This agent is compatible with ASI:One
 ## and acts as an expert in blockchain hash stamping and validation.
 
-AGENT_SEED_KEY = os.getenv("AGENT_SEED_KEY")
+SEED = os.getenv("AGENT_SEED")
 
 # the subject that this assistant is an expert in
 subject_matter = "blockchain hash stamping and validation using the Integritas API"
@@ -31,11 +31,14 @@ subject_matter = "blockchain hash stamping and validation using the Integritas A
 
 # Create the agent
 agent = Agent(
-    name="asi_integritas_agent",
-    seed="AGENT_SEED_KEY", # TODO: change this to a random seed
-    port=8000,
-    endpoint=["https://agentverse.ai/v1/submit"],
-    mailbox=True,
+    name="integritas_agent_testing",
+    seed=SEED, # TODO: change this to a random seed
+    port=8002,
+    endpoint=["http://127.0.0.1:8002/submit"],
+    # endpoint=["https://agentverse.ai/v1/submit"],
+    # mailbox=True,
+    readme_path="README.md",
+    # network="mainnet"
 )
 
 # Create a new protocol compatible with the chat protocol spec
@@ -244,7 +247,10 @@ async def process_proof_verification(ctx: Context, sender: str, json_input: str)
 @protocol.on_message(ChatAcknowledgement)
 async def handle_ack(ctx: Context, sender: str, msg: ChatAcknowledgement):
     # We are not interested in the acknowledgements for this example
-    pass
+        ctx.logger.info(
+        f"Got an acknowledgement from {sender} for {msg.acknowledged_msg_id}"
+    )
+    # pass TESTING TO PASS THIS
 
 # Attach the protocol to the agent
 agent.include(protocol, publish_manifest=True)

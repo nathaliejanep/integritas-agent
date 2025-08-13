@@ -66,30 +66,40 @@ async def ai_reasoning(ctx,sender, reason):
 def format_response(verification_result, ai_reason_response):
 
     result = verification_result['data']['response']['data']['result']
-    txnid = verification_result['data']['response']['nfttxnid']
-    explorerlink = f'https://explorer.minima.global/transactions/{txnid}'
 
-    final_response = (
-    f"🎉 Proof Verified!\n\n"
-    f"Your proof has been successfully verified.\n\n"
-    f"Your verification result: {result}\n\n"
-    f"[Your verification ID]({explorerlink})\n\n"
-    f"{ai_reason_response}\n\n---\n"
-    f"Visit [Integritas](https://integritas.minima.global/) to take your data integrity to the next level."
-)
-    # final_response_2 = f'''
-    # 🎉 Proof Verified!
-    
-    # Your proof has been successfully verified. 
-    # Your verification result: {result}
+    if result == 'full match':
+        date = verification_result['data']['response']['data']['blockchain_data'][0]['block_date']
+        block_number = verification_result['data']['response']['data']['blockchain_data'][0]['block_number']
+        txpow_id = verification_result['data']['response']['data']['blockchain_data'][0]['txpow_id']
+        txnid = verification_result['data']['response']['nfttxnid']
+        explorerlink = f'https://explorer.minima.global/transactions/{txnid}'
+        block_link = f'https://explorer.minima.global/blocks/{txpow_id}'
 
-    # '''
+        final_response = (
+            f"🎉 Proof Verified!\n\n"
+            f"Your proof has been successfully verified.\n\n"
 
-    # final_response_3 =  ai_reason_response
+            "## Verification Report\n\n"
+            "|  |  |\n"
+            "|---|---|\n"
+            f"| **Result**     | {result} |\n"
+            f"| **Date**       | {date} |\n"
+            f"| **Block**      | [{block_number}]({block_link}) |\n"
+            f"| **NFT Proof**  | [Verification ID]({explorerlink}) |\n"
+       
+            "\n\n\n"
 
-    # final_response = final_response_2 + final_response_3
-    
-    # final_response = f"{final_response_2}{ai_reason_response.strip()}"
+            f"{ai_reason_response}\n\n---\n"
+            f"Visit [Integritas](https://integritas.minima.global/) to take your data integrity to the next level."
+        )
+    else:
+        final_response = (
+            f"🎉 Proof Verified!\n\n"
+            f"Your proof has been successfully verified.\n\n"
+            f"Result: {result}\n\n"
+            f"{ai_reason_response}\n\n---\n"
+            f"Visit [Integritas](https://integritas.minima.global/) to take your data integrity to the next level."
+        )
     
     return final_response
 
@@ -98,13 +108,14 @@ def format_final_hash_response(proof_data):
     # Format the JSON for display
     json_content = json.dumps(proof_data, indent=2)
 
-    final_response = '''🎉 Confirmed on blockchain!
+    final_response = f'''🎉 Confirmed on blockchain!
 
-        Your hash has been successfully confirmed on the blockchain. This proof data can be used for later verification on the blockchain. 
-        Proof Data:
-        ```json
-        ''' + json_content + '''
-        ```
-    '''
+Your hash has been successfully confirmed on the blockchain. This proof data can be used for later verification on the blockchain.
+
+**Proof Data:**
+```json
+{json_content}
+```
+'''
     
     return final_response
