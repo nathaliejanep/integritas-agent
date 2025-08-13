@@ -6,10 +6,10 @@ SEED = os.getenv("TESTING_SEED")
 class Message(Model):
     message: str
 
-clientA = ("test-agent://agent1qflsarrncdqk759pfmlzxpy945k3vdty2hgkcz9w5fy7umtr306uzpqs4cu")
+clientA = ("test-agent://agent1qtzrfha4pmp8gvva3rzfeyqu7xs0lw343yv549936xd3ukw6a4jtz753chv")
  
 # Create an agent named Alice //RECEIVER
-clientB = Agent(name="clientB", seed=SEED, port=8001, endpoint=["http://localhost:8001/submit"])
+clientB = Agent(name="clientB", seed=SEED, port=8002, endpoint=["http://localhost:8002/submit"])
 
 print(clientB.address)
  

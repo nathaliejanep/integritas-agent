@@ -1,8 +1,6 @@
 from datetime import datetime, timezone
 from uuid import uuid4
-import json
 import os
-from typing import Any
 from uagents import Context, Protocol, Agent, Model
 from uagents_core.contrib.protocols.chat import (
     ChatAcknowledgement,
@@ -12,7 +10,6 @@ from uagents_core.contrib.protocols.chat import (
     TextContent,
     chat_protocol_spec,
 )
-from pydantic import BaseModel, Field
 
 # Import integritas utility functions
 from integritas_utils import process_stamp_hash, process_verify_proof
@@ -30,11 +27,13 @@ SEED = os.getenv("AGENT_SEED")
 # Create the agent
 agent = Agent(
     name="asi_integritas_agent",
-    seed=SEED, # TODO: change this to a random seed
+    # seed=SEED,
+    seed="testing_seedai9uf98afs",
     port=8000,
-    endpoint=["https://agentverse.ai/v1/submit"],
-    mailbox=True,
-    readme_path="README.md",
+    # endpoint=["https://agentverse.ai/v1/submit"],
+    endpoint=["http://127.0.0.1:8000/submit"],
+    # mailbox=True,
+    # readme_path="README.md",
     # network="mainnet"
 )
 
@@ -42,34 +41,39 @@ struct_output_client_proto = Protocol(
     name="StructuredOutputClientProtocol", version="0.1.0"
 )
 
-# Define the data model for hash data sent to the integritas agent
-class HashRequest(BaseModel):
-    hash: str = Field(
-        description="The hash data that needs to be processed by the integritas agent."
-    )
+
+class Message(Model):
+    message: str 
  
+class HashRequest(Model):
+    hash: str
  
-# Define the data model for responses received from the integritas agent
-class StampResponse(BaseModel):
-    message: str = Field(
-        description="The response message from integritas agent"
-    )
-    proof: str = Field(
-        description="The proof returned from Integritas API if successful, empty string if failed",
-    )
-    root: str = Field(
-        description="The root returned from Integritas API if successful, empty string if failed",
-    )
-    address: str = Field(
-        description="The address returned from Integritas API if successful, empty string if failed",
-    )
-    data: str = Field(
-        description="The data returned from Integritas API if successful, empty string if failed",
-    )
-    success: bool = Field(
-        description="Whether the hash was successfully stamped",
-        default=False
-    )
+class StampResponse(Model):
+    message: str
+    proof: str
+    root: str
+    address: str
+    data: str
+    success: bool
+
+class VerifyRequest(Model):
+    proof: str
+    root: str
+    address: str 
+    data: str
+
+class VerifyResponse(Model):
+    api_version: int
+    request_id: str
+    status: str
+    status_code: int
+    message: str
+    timestamp: str
+    data: dict
+
+class Start(Model):
+    message: str
+
 
 # Create a new protocol compatible with the chat protocol spec
 protocol = Protocol(spec=chat_protocol_spec)
@@ -163,17 +167,9 @@ async def process_hash_stamping(ctx: Context, sender: str, hash_input: str):
 async def process_proof_verification(ctx: Context, sender: str, json_input: str):
     await process_verify_proof(ctx, sender, json_input)
 
-@struct_output_client_proto.on_message(StructuredOutputPrompt)
-async def handle_structured_output_response(
-    ctx: Context, sender: str, msg: StructuredOutputPrompt
-    ):
-    ctx.logger.info(
-        f"Got an StructuredOutputResponse from {sender} for {msg}"
-    )
-
-@struct_output_client_proto.on_message(StructuredOutputResponse)
-async def handle_structured_output_response(
-    ctx: Context, sender: str, msg: StructuredOutputResponse
+@struct_output_client_proto.on_message(HashRequest)
+async def handle_hash_request(
+    ctx: Context, sender: str, msg: HashRequest
     ):
     ctx.logger.info(
         f"Got an StructuredOutputResponse from {sender} for {msg}"
@@ -189,6 +185,7 @@ async def handle_ack(ctx: Context, sender: str, msg: ChatAcknowledgement):
 
 # Attach the protocol to the agent
 agent.include(protocol, publish_manifest=True)
+agent.include(struct_output_client_proto, publish_manifest=True)
  
 if __name__ == "__main__":
     agent.run()
