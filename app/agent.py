@@ -119,7 +119,7 @@ async def _reply(ctx: Context, to: str, text: str, end_session: bool = False):
     ))
 
 print("Spec:", chat_protocol_spec.name, chat_protocol_spec.version)
-agent.include(protocol, publish_manifest=False)
+agent.include(protocol, publish_manifest=True)
 
 if __name__ == "__main__":
     agent.run()

@@ -1,6 +1,10 @@
 {
-    "clientB": {
-        "identity_key": "5508fe284198076a23f6790902764c032d90da78881e640c1d4408660dd684bf",
-        "wallet_key": "LAL0/JgXVJLIQGs6GP+HGf9TIhzrOxnQIi3RGLFfTSY="
+    "integritas_agent_testing": {
+        "identity_key": "e8b7dae1b9cab5d0450dbadc87bfe7f64810d7d58578a611381a7e662971d8cd",
+        "wallet_key": "kxSJ/yBH34y5fsmYOY0Z/dunlewEGk0gcDOgqp/kaSI="
+    },
+    "alice": {
+        "identity_key": "5230d9af1b5eabab7432d52ca5fc9357d15ab9668d69ff0c5bf0c1bfd0b3ba6e",
+        "wallet_key": "UvqUGWG50xmlkMN6N2KeivgFGBhPyUIM8hjezvhcFvU="
     }
 }
