@@ -1,3 +1,5 @@
+## integritas_utils.py
+
 # Integritas Utility Functions
 # This file contains utility functions for interacting with the Integritas API
 
@@ -17,7 +19,8 @@ from uagents_core.contrib.protocols.chat import (
     chat_protocol_spec,
 )
 from uagents import Context, Protocol, Agent
-from asi1_utils import ai_reasoning, format_response, format_final_hash_response
+
+from chat_utils import ai_reasoning, format_response, format_final_hash_response
 
 load_dotenv()
 

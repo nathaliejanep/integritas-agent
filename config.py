@@ -1,3 +1,5 @@
+## config.py
+
 from openai import OpenAI
 import os
 from pathlib import Path
