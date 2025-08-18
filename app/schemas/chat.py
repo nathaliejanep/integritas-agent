@@ -1,8 +1,8 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from typing import Any, Dict, List
 
 class StampIntent(BaseModel):
-    hash: str = Field(min_length=32)
+    hash: str
 
 class VerifyIntent(BaseModel):
     data: str

@@ -6,5 +6,9 @@
     "alice": {
         "identity_key": "5230d9af1b5eabab7432d52ca5fc9357d15ab9668d69ff0c5bf0c1bfd0b3ba6e",
         "wallet_key": "UvqUGWG50xmlkMN6N2KeivgFGBhPyUIM8hjezvhcFvU="
+    },
+    "clientB": {
+        "identity_key": "ad377f4227ec1416493af06a93fa90bb6c9d7c3c85dcce2e6bca19a0ab8e23a9",
+        "wallet_key": "hZkZwIGsQxoWXpqqEiiE6MnXwWdhq7mQ5vpbC5JN35Y="
     }
 }

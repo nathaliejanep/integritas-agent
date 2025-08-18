@@ -7,6 +7,12 @@ from uagents_core.contrib.protocols.chat import (
     ChatAcknowledgement, ChatMessage, StartSessionContent, EndSessionContent, TextContent, chat_protocol_spec
 )
 
+from app.protocols.integritas_proto import (
+    IntegritasProtocol,
+    StampHashRequest, StampHashResponse,
+    VerifyProofRequest, VerifyProofResponse, Error
+)
+
 from app.config.settings import AGENT_SEED, AGENT_PORT, AGENT_ENDPOINT
 from app.adapters.asi_client import ASIClient
 from app.adapters.integritas_client import IntegritasClient
@@ -21,7 +27,10 @@ agent = Agent(
     name="asi_integritas_agent",
     seed=AGENT_SEED,
     port=AGENT_PORT,
-    endpoint=[AGENT_ENDPOINT],
+    endpoint="https://agentverse.ai/v1/submit",
+    # endpoint=[AGENT_ENDPOINT],
+    # mailbox=True,
+    readme_path="README.md",
 )
 
 protocol = Protocol(spec=chat_protocol_spec)
@@ -38,6 +47,7 @@ class HashRequest(Model):
 
 @protocol.on_message(ChatMessage)
 async def handle_message(ctx: Context, sender: str, msg: ChatMessage):
+    ctx.logger.info("Initiated chat")
     # ack
     await ctx.send(sender, ChatAcknowledgement(
         timestamp=datetime.now(timezone.utc), acknowledged_msg_id=msg.msg_id
@@ -118,8 +128,76 @@ async def _reply(ctx: Context, to: str, text: str, end_session: bool = False):
         content=contents
     ))
 
-print("Spec:", chat_protocol_spec.name, chat_protocol_spec.version)
+# 2) Structured protocol (agent↔agent RPC)
+@IntegritasProtocol.on_message(StampHashRequest)
+async def rpc_stamp(ctx: Context, sender: str, msg: StampHashRequest):
+    try:
+        if not msg.hash or len(msg.hash) < 32:
+            await ctx.send(sender, StampHashResponse(
+                request_id=msg.request_id, ok=False,
+                error=Error(code="BAD_REQUEST", message="Invalid hash")
+            ))
+            return
+
+        uid = await stamping_service.stamp(msg.hash, request_id=f"rpc-{msg.request_id}")
+        if not uid:
+            await ctx.send(sender, StampHashResponse(
+                request_id=msg.request_id, ok=False,
+                error=Error(code="INTERNAL", message="Stamping failed")
+            ))
+            return
+
+        await ctx.send(sender, StampHashResponse(
+            request_id=msg.request_id, ok=True, uid=uid
+        ))
+    except Exception as e:
+        ctx.logger.exception("rpc_stamp error")
+        await ctx.send(sender, StampHashResponse(
+            request_id=msg.request_id, ok=False,
+            error=Error(code="INTERNAL", message=str(e))
+        ))
+
+@IntegritasProtocol.on_message(VerifyProofRequest)
+async def rpc_verify(ctx: Context, sender: str, msg: VerifyProofRequest):
+    try:
+        for key in ("proof","root","address","data"):
+            if not getattr(msg, key, None):
+                await ctx.send(sender, VerifyProofResponse(
+                    request_id=msg.request_id, ok=False,
+                    error=Error(code="BAD_REQUEST", message=f"Missing '{key}'")
+                ))
+                return
+
+        report = await verification_service.verify(
+            proof=msg.proof, root=msg.root, address=msg.address, data=msg.data,
+            request_id=f"rpc-{msg.request_id}"
+        )
+        if not report:
+            await ctx.send(sender, VerifyProofResponse(
+                request_id=msg.request_id, ok=False,
+                error=Error(code="INTERNAL", message="Verify failed")
+            ))
+            return
+
+        await ctx.send(sender, VerifyProofResponse(
+            request_id=msg.request_id, ok=True, report=report
+        ))
+    except Exception as e:
+        ctx.logger.exception("rpc_verify error")
+        await ctx.send(sender, VerifyProofResponse(
+            request_id=msg.request_id, ok=False,
+            error=Error(code="INTERNAL", message=str(e))
+        ))
+
+
+@protocol.on_message(ChatAcknowledgement)
+async def handle_ack(ctx: Context, sender: str, msg: ChatAcknowledgement):
+    ctx.logger.info(
+        f"Got an acknowledgement from {sender} for {msg.acknowledged_msg_id}"
+    )
+
 agent.include(protocol, publish_manifest=True)
+agent.include(IntegritasProtocol, publish_manifest=True)
 
 if __name__ == "__main__":
     agent.run()
