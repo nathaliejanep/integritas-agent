@@ -16,9 +16,9 @@ if not INTEGRITAS_API_KEY:
 INTEGRITAS_BASE_URL = "https://integritas.minima.global/core"
 
 # Agent
-AGENT_SEED = os.getenv("AGENT_SEED", "testing_seedai9uf98afs")
-AGENT_PORT = int(os.getenv("AGENT_PORT", "8000"))
-AGENT_ENDPOINT = os.getenv("AGENT_ENDPOINT", "http://127.0.0.1:8000/submit")
+AGENT_SEED = os.getenv("AGENT_SEED", "AGENT_SEED")
+AGENT_PORT = int(os.getenv("AGENT_PORT", "AGENT_PORT"))
+AGENT_ENDPOINT = os.getenv("AGENT_ENDPOINT", "AGENT_ENDPOINT")
 
 # Polling
 POLL_MAX_ATTEMPTS = int(os.getenv("POLL_MAX_ATTEMPTS", "10"))

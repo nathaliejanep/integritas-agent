@@ -1,3 +1,5 @@
+## clientB copy and paste template for verifying
+
 import asyncio
 import json
 from uagents import Agent, Context, Model, Protocol
@@ -66,18 +68,6 @@ async def on_verify_resp(ctx: Context, sender: str, msg: VerifyProofResponse):
 # Helper
 # -----------------------
 async def verify_via_provider(ctx: Context, provider_address: str, *, proof, timeout=30):
-    # request_id = str(uuid4())
-    # fut = asyncio.get_event_loop().create_future()
-    # pending_verify[request_id] = fut
-
-    # await ctx.send(provider_address, VerifyProofRequest(
-    #     request_id=request_id, proof=proof["proof"], root=proof["root"], address=proof["address"], data=proof["data"]
-    # ))
-    # try:
-    #     return await asyncio.wait_for(fut, timeout=timeout)
-    # except asyncio.TimeoutError:
-    #     pending_verify.pop(request_id, None)
-    #     return VerifyProofResponse(request_id=request_id, ok=False, error={"code":"TIMEOUT","message":"No response"})
     """Send a VerifyProofRequest and resolve when the verify response arrives."""
     request_id = str(uuid4())
     fut = asyncio.get_running_loop().create_future()
@@ -109,14 +99,6 @@ async def verify_via_provider(ctx: Context, provider_address: str, *, proof, tim
 # -----------------------
 @consumer.on_event("startup")
 async def go(ctx: Context):
-    # ctx.logger.info("BOOTING... waiting 10s before starting")
-    # await asyncio.sleep(10)   # ⏳ wait 10 seconds
-
-    # resp = await verify_via_provider(ctx, INTEGRITAS_AGENT_ADDRESS, proof=PROOF_TO_VERIFY)
-    # if resp.ok:
-    #     ctx.logger.info(f"Verification success! uid={resp.data}")
-    # else:
-    #     ctx.logger.warning(f"Verifying failed: {resp.error}")
     ctx.logger.info("BOOTING… waiting 10s before starting")
     await asyncio.sleep(10)
 

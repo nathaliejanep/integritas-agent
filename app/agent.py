@@ -26,14 +26,15 @@ from app.integritas_docs import docs  # keep your docs string here or move under
 
 # --- Agent + Protocols
 agent = Agent(
-    name="asi_integritas_agent",
-    seed=AGENT_SEED,
+    name="integritas_agent",
     port=AGENT_PORT,
-    # LOCAL
+    ## LOCAL
+    # seed=AGENT_SEED,
+    # endpoint=[AGENT_ENDPOINT],
+    ## HOSTED
+    seed=AGENT_SEED,
     endpoint=[AGENT_ENDPOINT],
-    # HOSTED
-    # endpoint="https://agentverse.ai/v1/submit",
-    # mailbox=True,
+    mailbox=True,
     readme_path="README.md",
 )
 
@@ -132,7 +133,7 @@ async def handle_message(ctx: Context, sender: str, msg: ChatMessage):
 async def _reply(ctx: Context, to: str, text: str, end_session: bool = False):
     contents = [TextContent(type="text", text=text)]
     if end_session:
-        contents.append(EndSessionContent())
+        contents.append(EndSessionContent(type="end-session"))
     await ctx.send(
         to,
         ChatMessage(

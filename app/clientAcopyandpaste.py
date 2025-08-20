@@ -37,13 +37,14 @@ class UidResponse(BaseResponse):
     address: Optional[str] = None
     data: Optional[str] = None
 
+INTEGRITAS_AGENT_ADDRESS = "agent1q0wh8zvtn90eankda62qu3yj56h0fp2gpsxu0kevpywaxu480r9ujsdyt25"
+
 # -----------------------
 # Config
 # -----------------------
 consumer = Agent(name="integritas_consumer_a", seed="cons-seed-asdadf3wff3", port=8001,
                  endpoint=["http://127.0.0.1:8001/submit"])
 
-INTEGRITAS_AGENT_ADDRESS = "agent1q0wh8zvtn90eankda62qu3yj56h0fp2gpsxu0kevpywaxu480r9ujsdyt25"
 
 HASH_TO_SEND = "4dd7cac4f6d591d0283d5a6c18ac1b8cb9294de94253f59a004fd6b721cfe7cf"
 
@@ -61,16 +62,6 @@ pending_stamp: Dict[str, asyncio.Future] = {}
 # -----------------------
 @consumer.on_message(StampHashResponse)
 async def on_stamp_resp(ctx: Context, sender: str, msg: StampHashResponse):
-    # if not msg.ok or not msg.uid:
-    #     fut = pending.pop(msg.request_id, None)
-    #     if fut and not fut.done():
-    #         fut.set_result(msg)  # propagate the error/upfront failure
-    #     return
-    
-    # ctx.logger.info("waiting 5s before checking status")
-    # await asyncio.sleep(5)   # ⏳ wait 5 seconds
-    # await ctx.send(sender, UidRequest(request_id=msg.request_id, uid=msg.uid))
-
     """Complete the stamp future immediately. Then *optionally* trigger a fire-and-forget status check."""
     fut = pending_stamp.pop(msg.request_id, None)
     if fut and not fut.done():
@@ -87,9 +78,6 @@ async def on_stamp_resp(ctx: Context, sender: str, msg: StampHashResponse):
 
 @consumer.on_message(UidResponse)
 async def on_uid_resp(ctx: Context, sender: str, msg: UidResponse):
-    # fut = pending.pop(msg.request_id, None)
-    # if fut and not fut.done():
-    #     fut.set_result(msg)
     """We’re using Pattern A, so just log whatever comes back from status."""
     if msg.ok:
         ctx.logger.info(f"""*Status result*
@@ -112,16 +100,6 @@ async def stamp_via_provider(ctx: Context, provider_address: str, hash_value: st
     """Send a StampHashRequest and resolve when the stamp response arrives.
     (Does NOT wait for on-chain status; that is fire-and-forget in the handler.)
     """
-    # request_id = str(uuid4())
-    # fut = asyncio.get_event_loop().create_future()
-    # pending[request_id] = fut
-
-    # await ctx.send(INTEGRITAS_AGENT_ADDRESS, StampHashRequest(request_id=request_id, hash=hash_value))
-    # try:
-    #     return await asyncio.wait_for(fut, timeout=timeout)
-    # except asyncio.TimeoutError:
-    #     pending.pop(request_id, None)
-    #     return StampHashResponse(request_id=request_id, ok=False, error={"code":"TIMEOUT","message":"No response"})
     request_id = str(uuid4())
     fut = asyncio.get_event_loop().create_future()
     pending_stamp[request_id] = fut
@@ -147,17 +125,9 @@ async def go(ctx: Context):
     ctx.logger.info("BOOTING... waiting 10s before starting")
     await asyncio.sleep(10)   # ⏳ wait 10 seconds
 
-    # resp = await stamp_via_provider(ctx, INTEGRITAS_AGENT_ADDRESS, HASH_TO_SEND)
-    # if resp.ok:
-    #     ctx.logger.info(f"Stamped! uid={resp.uid}")
-    # else:
-    #     ctx.logger.warning(f"Stamp failed: {resp.error}")
-
-        # Pattern A: get immediate stamp result
     stamp = await stamp_via_provider(ctx, INTEGRITAS_AGENT_ADDRESS, HASH_TO_SEND, timeout=60)
     if stamp.ok:
         ctx.logger.info(f"Stamped ✅ uid={stamp.uid}")
-        # The status request is already scheduled in on_stamp_resp (fire-and-forget).
     else:
         ctx.logger.warning(f"Stamp failed: {stamp.error}")
 
