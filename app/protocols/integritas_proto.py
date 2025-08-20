@@ -2,7 +2,10 @@
 from uagents import Protocol, Model
 from typing import Literal, Optional, Dict, Any
 
-IntegritasProtocol = Protocol(name="IntegritasProtocol", version="0.1.0")
+IntegritasProtocol = Protocol(
+    name="integritas.v1",
+    version="1.0.0"
+)
 
 # ----- Common -----
 class Error(Model):
@@ -27,6 +30,16 @@ class StampHashRequest(BaseRequest):
 
 class StampHashResponse(BaseResponse):
     uid: Optional[str] = None  # set when ok=True
+
+# ----- Status Check -----
+class UidRequest(BaseRequest):
+    uid: str
+
+class UidResponse(BaseResponse):
+    proof: Optional[str] = None
+    root: Optional[str] = None
+    address: Optional[str] = None
+    data: Optional[str] = None
 
 # ----- Verify Proof -----
 class VerifyProofRequest(BaseRequest):

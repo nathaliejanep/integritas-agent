@@ -9,7 +9,7 @@ class IntegritasClient:
         self._client = httpx.AsyncClient(
             base_url=INTEGRITAS_BASE_URL,
             headers={"x-api-key": INTEGRITAS_API_KEY},
-            timeout=30
+            timeout=600
         )
 
     async def stamp_hash(self, hash_value: str, request_id: str) -> str | None:
