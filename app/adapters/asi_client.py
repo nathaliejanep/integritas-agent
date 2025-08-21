@@ -32,7 +32,7 @@ class ASIClient:
 You analyze blockchain verification results.
 Docs: {docs}
 Summarize verification in natural language, highlight the on‑chain date (if available).
-No links. Polite, concise. 3–4 sections with short headings and icons.
+No links. Polite, concise, structured. 3–4 sections with short headings and icons. Make sure the headings are marked as headings and the paragrapghs are not bold or marked as headings. Make sure every paragraph is formatted the same way.
 """},
             {"role":"assistant","content": f"Please explain: {reason_payload}. Skip introductions."}
         ]
