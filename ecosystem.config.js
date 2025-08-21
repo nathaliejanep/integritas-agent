@@ -3,7 +3,6 @@ module.exports = {
   apps: [
     {
       name: "agent",
-      cwd: "/home/integritas-agent",
       script: "app.agent",
       interpreter: "/home/integritas-agent/venv/bin/python",
       interpreter_args: "-m",
