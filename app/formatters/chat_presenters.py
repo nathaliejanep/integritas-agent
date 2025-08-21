@@ -56,13 +56,13 @@ def verification_report(verification_result: dict, ai_reasoning: str) -> str:
             f"{table}\n\n"
             "## Intelligent analysis\n\n"
             "(AI can make mistakes. Check important info.)\n\n---\n"
-            f"{ai_reasoning}\n---\n"
+            f"{ai_reasoning}\n\n---\n"
             "Visit [Integritas ↗](https://integritas.minima.global) for more information."
         )
 
     return (
         "✅ Verification completed\n\n"
         f"Result: **{result}**\n\n"
-        f"{ai_reasoning}\n---\n"
+        f"{ai_reasoning}\n\n---\n"
         "Visit [Integritas ↗](https://integritas.minima.global) for more information."
     )
