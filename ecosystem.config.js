@@ -3,9 +3,9 @@ module.exports = {
   apps: [
     {
       name: "agent",
-      script: "app.agent", // module path (no .py)
-      interpreter: "venv/bin/python", // your venv's python
-      interpreter_args: "-m", // makes it: python -m app.agent
+      cwd: "/home/integritas-agent",
+      script: "/home/integritas-agent/venv/bin/python", // run python itself
+      args: "-m app.agent", // pass -m app.agent
     },
   ],
 };
