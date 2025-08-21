@@ -339,7 +339,7 @@ Field	Type	Description
 block_number	string	Block number where the hash was found.
 block_date	string	Timestamp in YYYY-MM-DD HH:mm:ss format when the hash was recorded.
 txpow_id	string	Transaction ID of the Proof-of-Work where the hash was included.
-transactionid	string	Unique ID of the blockchain transaction that contains the matched hash.
+transactionid	string	Unique ID of the blockchain transaction that contains the root hash.
 matched_hash	string	The matched hash value found in the block.
 Breakdown of fileSegments
 
