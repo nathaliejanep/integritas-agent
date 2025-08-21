@@ -37,10 +37,13 @@ class VerifyProofResponse(BaseResponse):
 # Config
 # -----------------------
 
+## Hosted Agent
+# consumer = Agent()
+
 consumer = Agent(name="integritas_consumer_b", seed="cons-seed-b45w5ww645", port=8002,
                  endpoint=["http://127.0.0.1:8002/submit"])
 
-INTEGRITAS_AGENT_ADDRESS = "agent1q0wh8zvtn90eankda62qu3yj56h0fp2gpsxu0kevpywaxu480r9ujsdyt25"
+INTEGRITAS_AGENT_ADDRESS = "agent1qdyuuxywe5p96p53slsgjg6wa4m030lgh734vpqswavgucwgm3f5sdwjaye"
 
 PROOF_TO_VERIFY = {
     "proof": "0x000100000100",
@@ -67,7 +70,8 @@ async def on_verify_resp(ctx: Context, sender: str, msg: VerifyProofResponse):
 # -----------------------
 # Helper
 # -----------------------
-async def verify_via_provider(ctx: Context, provider_address: str, *, proof, timeout=30):
+async def verify_via_provider(ctx: Context, provider_address: str, *, proof, timeout=600):
+    ctx.logger.info("Verification requested")
     """Send a VerifyProofRequest and resolve when the verify response arrives."""
     request_id = str(uuid4())
     fut = asyncio.get_running_loop().create_future()
@@ -102,7 +106,7 @@ async def go(ctx: Context):
     ctx.logger.info("BOOTING… waiting 10s before starting")
     await asyncio.sleep(10)
 
-    resp = await verify_via_provider(ctx, INTEGRITAS_AGENT_ADDRESS, proof=PROOF_TO_VERIFY, timeout=60)
+    resp = await verify_via_provider(ctx, INTEGRITAS_AGENT_ADDRESS, proof=PROOF_TO_VERIFY, timeout=600)
     if resp.ok:
         payload = resp.model_dump() if hasattr(resp, "model_dump") else resp.dict()
         ctx.logger.info(

@@ -1,6 +1,7 @@
 import asyncio
-from uagents import Agent, Context, Model, Protocol
-from typing import Literal, Optional, Dict, Any
+import json
+from uagents import Agent, Context, Model
+from typing import Literal, Optional
 from uuid import uuid4
 
 # ----- Common -----
@@ -10,10 +11,6 @@ class Error(Model):
 
 class BaseRequest(Model):
     request_id: str
-    # (optional) security / auth metadata
-    # nonce: Optional[str]
-    # signature: Optional[str]
-    # timestamp: Optional[str]
 
 class BaseResponse(Model):
     request_id: str
@@ -37,99 +34,60 @@ class UidResponse(BaseResponse):
     address: Optional[str] = None
     data: Optional[str] = None
 
-INTEGRITAS_AGENT_ADDRESS = "agent1q0wh8zvtn90eankda62qu3yj56h0fp2gpsxu0kevpywaxu480r9ujsdyt25"
+INTEGRITAS_AGENT_ADDRESS = "agent1q2svq8ukmatt8edfpp4heckcmxpk7gchelecf2v98pf723w932dsst7059g"
 
 # -----------------------
 # Config
 # -----------------------
-consumer = Agent(name="integritas_consumer_a", seed="cons-seed-asdadf3wff3", port=8001,
-                 endpoint=["http://127.0.0.1:8001/submit"])
+consumer = Agent()
 
-
-HASH_TO_SEND = "4dd7cac4f6d591d0283d5a6c18ac1b8cb9294de94253f59a004fd6b721cfe7cf"
-
-
-# -----------------------
-# Pending map
-# -----------------------
-# Pattern A: We resolve the future on the stamp response and return it to the caller.
-# The on-chain status check is *not* tied to that same future (fire-and-forget).
-pending_stamp: Dict[str, asyncio.Future] = {}
-
+# ENTER THE HASH YOU WISH TO STAMP HERE
+HASH_TO_SEND = ""
 
 # -----------------------
 # Handlers
 # -----------------------
 @consumer.on_message(StampHashResponse)
 async def on_stamp_resp(ctx: Context, sender: str, msg: StampHashResponse):
-    """Complete the stamp future immediately. Then *optionally* trigger a fire-and-forget status check."""
-    fut = pending_stamp.pop(msg.request_id, None)
-    if fut and not fut.done():
-        fut.set_result(msg)
+    payload = msg.model_dump() if hasattr(msg, "model_dump") else msg.dict()
+    payload_s = json.dumps(payload, ensure_ascii=False)
 
-    # Fire-and-forget status check (only if stamping succeeded and we have a UID)
     if msg.ok and msg.uid:
-        ctx.logger.info("Stamp succeeded; waiting 10s before sending status request…")
-        await asyncio.sleep(10)
+        ctx.logger.info(f"Stamp success ✅ uid={msg.uid}")
+        # Optional: immediately ask for on-chain status (fire-and-forget)
         await ctx.send(sender, UidRequest(request_id=str(uuid4()), uid=msg.uid))
     else:
-        ctx.logger.warning(f"Stamp failed or missing UID: {msg.error}")
-
+        ctx.logger.warning(f"Stamp failed ❌ response={payload_s}")
 
 @consumer.on_message(UidResponse)
 async def on_uid_resp(ctx: Context, sender: str, msg: UidResponse):
-    """We’re using Pattern A, so just log whatever comes back from status."""
+    payload = msg.model_dump() if hasattr(msg, "model_dump") else msg.dict()
+    payload_s = json.dumps(payload, ensure_ascii=False)
+
     if msg.ok:
-        ctx.logger.info(f"""*Status result*
-    proof:
-    {msg.proof}
-    root:
-    {msg.root}
-    data:
-    {msg.data}
-    address:
-    {msg.address}
-    """)
+        ctx.logger.info(f"On-chain ✅ response={payload_s}")
     else:
-        ctx.logger.warning(f"Status check failed: {msg.error}")
+        ctx.logger.warning(f"Status check failed ❌ response={payload_s}")
 
 # -----------------------
-# Helper
+# Helper (fire-and-forget)
 # -----------------------
-async def stamp_via_provider(ctx: Context, provider_address: str, hash_value: str, timeout=30):
-    """Send a StampHashRequest and resolve when the stamp response arrives.
-    (Does NOT wait for on-chain status; that is fire-and-forget in the handler.)
-    """
+async def stamp_via_provider(ctx: Context, provider_address: str, hash_value: str) -> str:
+    """Send a StampHashRequest and return the request_id (no waiting)."""
     request_id = str(uuid4())
-    fut = asyncio.get_event_loop().create_future()
-    pending_stamp[request_id] = fut
-
     await ctx.send(provider_address, StampHashRequest(request_id=request_id, hash=hash_value))
+    return request_id
 
-    try:
-        result = await asyncio.wait_for(fut, timeout=timeout)
-        return result  # StampHashResponse
-    except asyncio.TimeoutError:
-        pending_stamp.pop(request_id, None)
-        return StampHashResponse(
-            request_id=request_id,
-            ok=False,
-            error=Error(code="TIMEOUT", message="No stamp response within timeout"),
-        )
-    
 # -----------------------
 # Boot
 # -----------------------
 @consumer.on_event("startup")
 async def go(ctx: Context):
-    ctx.logger.info("BOOTING... waiting 10s before starting")
-    await asyncio.sleep(10)   # ⏳ wait 10 seconds
+    ctx.logger.info("BOOTING… waiting 10s before starting")
+    await asyncio.sleep(10)
 
-    stamp = await stamp_via_provider(ctx, INTEGRITAS_AGENT_ADDRESS, HASH_TO_SEND, timeout=60)
-    if stamp.ok:
-        ctx.logger.info(f"Stamped ✅ uid={stamp.uid}")
-    else:
-        ctx.logger.warning(f"Stamp failed: {stamp.error}")
+    rid = await stamp_via_provider(ctx, INTEGRITAS_AGENT_ADDRESS, HASH_TO_SEND)
+    ctx.logger.info(f"Stamp request sent (request_id={rid}). Await async responses in on_stamp_resp/on_uid_resp.")
 
 if __name__ == "__main__":
     consumer.run()

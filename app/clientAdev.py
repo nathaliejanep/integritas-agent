@@ -45,7 +45,7 @@ class UidResponse(BaseResponse):
 consumer = Agent(name="integritas_consumer_a", seed="cons-seed-asdadf3wff3", port=8001,
                  endpoint=["http://127.0.0.1:8001/submit"])
 
-INTEGRITAS_AGENT_ADDRESS = "agent1q0wh8zvtn90eankda62qu3yj56h0fp2gpsxu0kevpywaxu480r9ujsdyt25"
+INTEGRITAS_AGENT_ADDRESS = "agent1qdyuuxywe5p96p53slsgjg6wa4m030lgh734vpqswavgucwgm3f5sdwjaye"
 
 HASH_TO_SEND = "4dd7cac4f6d591d0283d5a6c18ac1b8cb9294de94253f59a004fd6b721cfe7cf"
 

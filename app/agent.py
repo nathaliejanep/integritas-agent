@@ -28,10 +28,6 @@ from app.integritas_docs import docs  # keep your docs string here or move under
 agent = Agent(
     name="integritas_agent",
     port=AGENT_PORT,
-    ## LOCAL
-    # seed=AGENT_SEED,
-    # endpoint=[AGENT_ENDPOINT],
-    ## HOSTED
     seed=AGENT_SEED,
     endpoint=[AGENT_ENDPOINT],
     mailbox=True,
@@ -146,6 +142,7 @@ async def _reply(ctx: Context, to: str, text: str, end_session: bool = False):
 # 2) Structured protocol (agent↔agent RPC)
 @IntegritasProtocol.on_message(StampHashRequest)
 async def rpc_stamp(ctx: Context, sender: str, msg: StampHashRequest):
+    ctx.logger.info("Stamp requested")
     try:
         if not msg.hash or len(msg.hash) < 32:
             await ctx.send(sender, StampHashResponse(
@@ -174,6 +171,7 @@ async def rpc_stamp(ctx: Context, sender: str, msg: StampHashRequest):
 
 @IntegritasProtocol.on_message(UidRequest)
 async def rpc_status(ctx: Context, sender: str, msg: UidRequest):
+    ctx.logger.info("Uid status Requested")
     try:
         if not msg.uid or len(msg.uid) < 20:
             await ctx.send(sender, UidResponse(
@@ -202,6 +200,7 @@ async def rpc_status(ctx: Context, sender: str, msg: UidRequest):
 
 @IntegritasProtocol.on_message(VerifyProofRequest)
 async def rpc_verify(ctx: Context, sender: str, msg: VerifyProofRequest):
+    ctx.logger.info("Verify Proof Requested")
     # try:
     #     for key in ("proof","root","address","data"):
     #         if not getattr(msg, key, None):
