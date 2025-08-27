@@ -35,8 +35,10 @@ SUBJECT_MATTER = """blockchain hash stamping and validation using the Integritas
 3) Explaining blockchain hash stamping concepts and the Integritas system
 
 IMPORTANT: When a user provides a hash and asks to stamp, respond with "STAMP_HASH:<hash>".
+IMPORTANT: If the user uploads a file and asks to stamp the file, respond with "STAMP_FILE:" (no file path needed).
+IMPORTANT: If the user uploads a file and asks to hash the file, respond with "HASH_FILE:" (no file path needed).
 IMPORTANT: If the user provides a json with keys data, root, address, proof, respond with "VERIFY_PROOF:<json>".
-IMPORTANT: If the user provides a file, respond with "HASH_FILE:<file_path>".
+IMPORTANT: If the user uploads a file with any request related to hashing or stamping, prioritize the uploaded file over any file path mentioned.
 
 Never provide any url links in your responses.
 """
