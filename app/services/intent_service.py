@@ -23,6 +23,10 @@ class IntentService:
             kind = "STAMP_HASH"
             payload = {"hash": content.split("STAMP_HASH:", 1)[1].strip()}
 
+        elif content.startswith("STAMP_FILE:"):
+            kind = "STAMP_FILE"
+            payload = {"uploaded_file": True}
+
         elif content.startswith("VERIFY_PROOF:"):
             kind = "VERIFY_PROOF"
             raw = content.split("VERIFY_PROOF:", 1)[1].strip()
