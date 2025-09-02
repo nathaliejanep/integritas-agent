@@ -15,8 +15,18 @@ def shorten_string(s: str, start_chars=6, end_chars=4) -> str:
         return s  # no need to shorten
     return f"{s[:start_chars]}…{s[-end_chars:]}"
     
-def final_hash_confirmation(proof: dict) -> str:
-    return (
+def final_hash_confirmation(result: dict) -> str:
+    """
+    Generate a confirmation message that includes both proof data and download link information.
+    
+    Args:
+        result: The full result from stamping_service.stamp_hash()
+    """
+    # Extract proof data
+    proof = result.get("proof", {})
+    
+    # Start with the basic confirmation
+    message = (
         "🎉 Confirmed on blockchain!\n\n"
         "Your hash has been successfully confirmed on the blockchain. "
         "This proof data can be used for later verification on the blockchain.\n\n"
@@ -25,6 +35,20 @@ def final_hash_confirmation(proof: dict) -> str:
         f"{json.dumps(proof, indent=2)}\n"
         "```\n"
     )
+    
+    # Add download link information if available
+    download_link = result.get("downloadLink")
+    
+    if download_link:
+        message += (
+            "\n **Proof File Available for Download**\n\n"
+            f"**Download Link:**  [Proof File ↗]({download_link})\n\n"
+            "💡 **Note:** \n\n"
+            "• This download link is valid for 1 hour and can be shared with others.\n\n"
+            "• Click on the link, right click and save as to download the file.\n"
+        )
+
+    return message
 
 def verification_report(verification_result: dict, ai_reasoning: str) -> str:
     try:

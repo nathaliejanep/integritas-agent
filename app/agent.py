@@ -157,7 +157,7 @@ async def handle_message(ctx: Context, sender: str, msg: ChatMessage):
                 return
             
             if result["onchain"]:
-                await _reply(ctx, sender, final_hash_confirmation(result["proof"]), end_session=True)
+                await _reply(ctx, sender, final_hash_confirmation(result), end_session=True)
             else:
                 await _reply(ctx, sender, result["message"], end_session=True)
             return
@@ -212,7 +212,7 @@ async def handle_message(ctx: Context, sender: str, msg: ChatMessage):
                     return
                 
                 if result["onchain"]:
-                    await _reply(ctx, sender, final_hash_confirmation(result["proof"]), end_session=True)
+                    await _reply(ctx, sender, final_hash_confirmation(result), end_session=True)
                 else:
                     await _reply(ctx, sender, result["message"], end_session=True)
             else:
