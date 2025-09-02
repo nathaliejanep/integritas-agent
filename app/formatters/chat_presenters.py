@@ -15,16 +15,29 @@ def shorten_string(s: str, start_chars=6, end_chars=4) -> str:
         return s  # no need to shorten
     return f"{s[:start_chars]}…{s[-end_chars:]}"
     
-def final_hash_confirmation(proof: dict) -> str:
-    return (
-        "🎉 Confirmed on blockchain!\n\n"
-        "Your hash has been successfully confirmed on the blockchain. "
-        "This proof data can be used for later verification on the blockchain.\n\n"
-        "**Proof Data:**\n"
-        "```json\n"
-        f"{json.dumps(proof, indent=2)}\n"
-        "```\n"
-    )
+def final_hash_confirmation(proof: dict, proof_filename: str = None) -> str:
+    if proof_filename:
+        return (
+            "🎉 Confirmed on blockchain!\n\n"
+            "Your hash has been successfully confirmed on the blockchain. "
+            f"A proof file has been generated and is available for download below.\n\n"
+            "This proof file can be used for later verification on the blockchain.\n\n"
+            "**Proof Summary:**\n"
+            f"• **Address:** {proof.get('address', 'N/A')}\n"
+            f"• **Root:** {proof.get('root', 'N/A')[:16]}...\n"
+            f"• **Data:** {proof.get('data', 'N/A')[:16]}...\n"
+        )
+    else:
+        # Fallback to original behavior
+        return (
+            "🎉 Confirmed on blockchain!\n\n"
+            "Your hash has been successfully confirmed on the blockchain. "
+            "This proof data can be used for later verification on the blockchain.\n\n"
+            "**Proof Data:**\n"
+            "```json\n"
+            f"{json.dumps(proof, indent=2)}\n"
+            "```\n"
+        )
 
 def verification_report(verification_result: dict, ai_reasoning: str) -> str:
     try:

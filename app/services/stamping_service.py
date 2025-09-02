@@ -91,6 +91,14 @@ class StampingService:
                 "proof": proof,
                 "onchain": True
             }
+        else:
+            return {
+                "success": True,
+                "message": f"⏳ Status Update\n\n**UID:** {uid}\nStill waiting for blockchain confirmation.",
+                "uid": uid,
+                "proof": None,
+                "onchain": False
+            }
         # else:
         #     return {
         #         "success": True,

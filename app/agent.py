@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 # from sortedcontainers.sortedlist import identity
 from uagents import Agent, Context, Protocol, Model
 from uagents_core.contrib.protocols.chat import (
-    ChatAcknowledgement, ChatMessage, MetadataContent, ResourceContent,StartSessionContent, EndSessionContent, TextContent, chat_protocol_spec
+    ChatAcknowledgement, ChatMessage, MetadataContent, ResourceContent, Resource, StartSessionContent, EndSessionContent, TextContent, chat_protocol_spec
 )
 from uagents_core.storage import ExternalStorage
 
@@ -18,7 +18,7 @@ from app.protocols.integritas_proto import (
     VerifyProofRequest, VerifyProofResponse, Error
 )
 
-from app.config.settings import AGENT_SEED, AGENT_PORT, AGENT_ENDPOINT, STORAGE_URL
+from app.config.settings import AGENT_SEED, AGENT_PORT, AGENT_ENDPOINT, STORAGE_URL, AGENTVERSE_API_KEY
 from app.adapters.asi_client import ASIClient
 from app.adapters.integritas_client import IntegritasClient
 # from app.services import hashing_service
@@ -26,8 +26,10 @@ from app.services.intent_service import IntentService
 from app.services.stamping_service import StampingService
 from app.services.hashing_service import HashingService
 from app.services.verification_service import VerificationService
+from app.services.proof_file_service import ProofFileService
 from app.formatters.chat_presenters import final_hash_confirmation, verification_report
 from app.integritas_docs import docs  # keep your docs string here or move under /config
+from pydantic.v1 import UUID4
 
 # --- Agent + Protocols
 agent = Agent(
@@ -40,6 +42,7 @@ agent = Agent(
 )
 
 protocol = Protocol(spec=chat_protocol_spec)
+content_type = "application/json"
 
 # --- DI singletons (kept simple)
 asi = ASIClient()
@@ -48,6 +51,7 @@ intent_service = IntentService(asi)
 stamping_service = StampingService(integ)
 verification_service = VerificationService(integ)
 hashing_service = HashingService()
+proof_file_service = ProofFileService(integ)
 
 # This is used to add metadata to the chat message for the agentverse storage
 def create_metadata(metadata: dict[str, str]) -> ChatMessage:
@@ -60,7 +64,26 @@ def create_metadata(metadata: dict[str, str]) -> ChatMessage:
         )],
     )
 
-
+def create_resource_chat(asset_id: str, uri: str) -> ChatMessage:
+    return ChatMessage(
+        timestamp=datetime.now(timezone.utc),
+        msg_id=uuid4(),
+        content=[
+            ResourceContent(
+                type="resource",
+                resource_id=UUID4(asset_id),
+                resource=Resource(
+                    uri=uri,
+                    metadata={
+                        "mime_type": content_type,
+                        "role": "proof-file",
+                        "filename": "PROOF.json",
+                    }
+                )
+            )
+        ]
+    )
+    
 @protocol.on_message(ChatMessage)
 async def handle_message(ctx: Context, sender: str, msg: ChatMessage):
     ctx.logger.info("Initiated chat")
@@ -157,7 +180,51 @@ async def handle_message(ctx: Context, sender: str, msg: ChatMessage):
                 return
             
             if result["onchain"]:
-                await _reply(ctx, sender, final_hash_confirmation(result["proof"]), end_session=True)
+                # Generate proof file using the UID
+                try:
+                    proof_file_result = await proof_file_service.generate_proof_file_from_uids([result["uid"]])
+                    if proof_file_result["success"]:
+                        # Send the confirmation message first
+                        await _reply(ctx, sender, final_hash_confirmation(result["proof"], proof_file_result["filename"]))
+                        
+                        # Now upload the proof file to external storage and send as downloadable resource
+                        try:
+                            # Read the proof file content
+                            with open(proof_file_result["file_path"], "rb") as f:
+                                file_content = f.read()
+                            
+                            # Upload to external storage
+                            external_storage = ExternalStorage(
+                                api_token=AGENTVERSE_API_KEY,
+                                storage_url=STORAGE_URL,
+                            )
+                            
+                            asset_id = external_storage.create_asset(
+                                name=proof_file_result["filename"],
+                                content=file_content,
+                                mime_type=content_type
+                            )
+
+                            asset_uri = f"agent-storage://{STORAGE_URL}/{asset_id}"
+                            print(f"Asset URI: {asset_uri}")
+                            await ctx.send(sender, create_resource_chat(asset_id, asset_uri))
+
+                            # Set permissions for the sender
+                            external_storage.set_permissions(asset_id=asset_id, agent_address=sender)
+                            
+                        except Exception as e:
+                            ctx.logger.error(f"Failed to upload proof file to storage: {e}")
+                        
+                        # End the session
+                        await _reply(ctx, sender, "", end_session=True)
+                        
+                    else:
+                        # Fallback to original behavior if proof file generation fails
+                        await _reply(ctx, sender, final_hash_confirmation(result["proof"]), end_session=True)
+                except Exception as e:
+                    ctx.logger.error(f"Failed to generate proof file: {e}")
+                    # Fallback to original behavior
+                    await _reply(ctx, sender, final_hash_confirmation(result["proof"]), end_session=True)
             else:
                 await _reply(ctx, sender, result["message"], end_session=True)
             return

@@ -7,13 +7,17 @@ load_dotenv(ROOT / ".env")
 
 ASI_API_KEY = os.getenv("ASI_API_KEY")
 INTEGRITAS_API_KEY = os.getenv("INTEGRITAS_API_KEY")
+AGENTVERSE_API_KEY = os.getenv("AGENTVERSE_API_KEY")
 if not ASI_API_KEY:
     raise RuntimeError("ASI_API_KEY missing")
 if not INTEGRITAS_API_KEY:
     raise RuntimeError("INTEGRITAS_API_KEY missing")
+if not AGENTVERSE_API_KEY:
+    raise RuntimeError("AGENTVERSE_API_KEY missing")
 
-# Networking
-INTEGRITAS_BASE_URL = "https://integritas.minima.global/core"
+
+# Networking "https://integritas.minima.global/core"
+INTEGRITAS_BASE_URL = "http://localhost:5005"
 
 # Storage
 STORAGE_URL = os.getenv("AGENTVERSE_URL", "https://agentverse.ai") + "/v1/storage"
