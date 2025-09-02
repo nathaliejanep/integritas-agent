@@ -28,16 +28,31 @@ class ASIClient:
     async def explain_verification(self, docs: str, reason_payload: str) -> str:
         # Reuse same endpoint; different prompt specialization
         messages = [
-            {"role":"system","content": f"""
-You analyze blockchain verification results.
-Docs: {docs}
-Summarize verification in natural language, highlight the on‑chain date (if available).
-No links. Polite, concise, structured. 3–4 sections with short headings and icons. Make sure the headings are marked as headings and the paragrapghs are not bold or marked as headings. Make sure every paragraph is formatted the same way.
-"""},
-            {"role":"assistant","content": f"Please explain: {reason_payload}. Skip introductions."}
+            {"role":"system","content": """
+                You are an expert blockchain verification analyst. Your task is to explain verification results based on the provided documentation.
+
+                CRITICAL: You must ONLY use information that is explicitly provided in the verification results. NEVER make up, assume, or infer any information that is not directly stated in the results.
+
+                Your response should:
+                - Summarize the verification results in natural language
+                - Highlight the on-chain date if available, always use the date from the verification result and never make up a date
+                - Be structured with 3-4 clear sections
+                - Use short, descriptive headings
+                - Be polite, concise, and factual
+                - Include no external links or references
+
+                IMPORTANT: If any information is not explicitly stated in the verification results, do not include it in your response. Stick strictly to the facts provided.
+            """},
+            {"role":"user","content": f"Based on these verification results: {docs}\n\nPlease explain: {reason_payload}\n\nIMPORTANT: Only use information from the verification results above. Do not make up or assume any information."}
         ]
         r = await self._client.post("/chat/completions", json={
-            "model":"asi1-mini", "messages": messages, "max_tokens": 2048
+            "model":"asi1-mini", 
+            "messages": messages, 
+            "max_tokens": 2048,
+            "temperature": 0.1,  # Lower temperature for more factual responses
+            "top_p": 0.9,       # Focus on most likely tokens
+            "frequency_penalty": 0.1,  # Reduce repetition
+            "presence_penalty": 0.1    # Encourage focus on provided content
         })
         r.raise_for_status()
         data = r.json()
