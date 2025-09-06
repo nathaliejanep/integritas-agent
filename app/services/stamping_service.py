@@ -28,7 +28,7 @@ class StampingService:
             
             # Send status update if callback provided and not the first attempt
             if status_callback and attempt > 0:
-                await status_callback(f"⏳ Still checking blockchain confirmation... (attempt {attempt + 1}/{attempts})")
+                await status_callback(f"Still checking on-chain confirmation... (attempt {attempt + 1}/{attempts})")
             
             await asyncio.sleep(delay)
 
@@ -36,7 +36,7 @@ class StampingService:
 
     async def stamp_hash(self, hash_value: str, sender: str, request_id: str = None, status_callback=None) -> dict:
         """
-        Complete hash stamping workflow including validation, stamping, and on-chain confirmation.
+        Complete hash stamping workflow including validation, stamping, on-chain confirmation, and proof file link generation.
         
         Args:
             hash_value: The hash to stamp
@@ -45,7 +45,7 @@ class StampingService:
             status_callback: Optional callback function to send intermediate status messages
             
         Returns:
-            dict: Result containing success status, messages, and proof data
+            dict: Result containing success status, messages, proof data, and download link information
         """
         # Validate hash
         if len(hash_value) < 32:
@@ -53,7 +53,9 @@ class StampingService:
                 "success": False,
                 "message": "The provided value doesn't look like a valid hash. Make sure you're using the correct hash value of a sha3-256 hash.",
                 "uid": None,
-                "proof": None
+                "proof": None,
+                "downloadLink": None,
+                "filename": None
             }
         
         # Generate request_id if not provided
@@ -67,12 +69,14 @@ class StampingService:
                 "success": False,
                 "message": "❌ Failed to stamp hash. Please check the hash and try again.",
                 "uid": None,
-                "proof": None
+                "proof": None,
+                "downloadLink": None,
+                "filename": None
             }
         
         # Send intermediate status message if callback provided
         if status_callback:
-            await status_callback(f"✅ Hash stamped successfully!\n\n**UID:** {uid}\n\nChecking on‑chain confirmation...")
+            await status_callback(f"✅ Hash stamped successfully!\n\n ⏳ Checking on‑chain confirmation...")
         
         # Wait for on-chain confirmation
         onchain = await self.wait_for_onchain(uid, status_callback=status_callback)
@@ -84,18 +88,59 @@ class StampingService:
                 "root": onchain["root"],
                 "data": onchain["data"],
             }
-            return {
-                "success": True,
-                "message": "✅ Hash stamped successfully!",
-                "uid": uid,
-                "proof": proof,
-                "onchain": True
-            }
-        # else:
-        #     return {
-        #         "success": True,
-        #         "message": f"⏳ Status Update\n\n**UID:** {uid}\nStill waiting for blockchain confirmation.",
-        #         "uid": uid,
-        #         "proof": None,
-        #         "onchain": False
-        #     }
+            
+            # Call the proof file link endpoint to get a downloadable link
+            # if status_callback:
+            #     await status_callback(f"✅ On-chain confirmation received!\n\nGenerating proof file and download link...")
+            
+            try:
+                proof_file_result = await self.integ.get_proof_file_link([uid], request_id)
+                
+                if proof_file_result["status"] == "success":
+                    # Extract the download link and file info
+                    data = proof_file_result["data"]
+                    download_link = data.get("downloadUrl")
+                    filename = data.get("filename")
+                    print(f"Download link: {download_link}")
+                    return {
+                        "success": True,
+                        "message": f"✅ Hash stamped successfully and on-chain!\n\n**UID:** {uid}\n**Proof File:** {filename}\n**Download Link:** {download_link}",
+                        "uid": uid,
+                        "proof": proof,
+                        "onchain": True,
+                        "downloadLink": download_link,
+                        "filename": filename
+                    }
+                else:
+                    # Return success with proof but without download link if endpoint call fails
+                    return {
+                        "success": True,
+                        "message": f"✅ Hash stamped successfully and on-chain!\n\n**UID:** {uid}\n⚠️ Proof file link generation failed",
+                        "uid": uid,
+                        "proof": proof,
+                        "onchain": True,
+                        "downloadLink": None,
+                        "filename": None
+                    }
+                    
+            except Exception as e:
+                # Return success with proof but without download link if endpoint call fails
+                return {
+                    "success": True,
+                    "message": f"✅ Hash stamped successfully and on-chain!\n\n**UID:** {uid}\n⚠️ Proof file service unavailable: {str(e)}",
+                    "uid": uid,
+                    "proof": proof,
+                    "onchain": True,
+                    "downloadLink": None,
+                    "filename": None
+                }
+        # If not on-chain yet, return waiting status
+        return {
+            "success": True,
+            "message": f"⏳ Status Update\n\nStill waiting for blockchain confirmation.",
+            "uid": uid,
+            "proof": None,
+            "onchain": False,
+            "downloadLink": None,
+            "filename": None
+        }

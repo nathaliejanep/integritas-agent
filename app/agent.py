@@ -157,7 +157,7 @@ async def handle_message(ctx: Context, sender: str, msg: ChatMessage):
                 return
             
             if result["onchain"]:
-                await _reply(ctx, sender, final_hash_confirmation(result["proof"]), end_session=True)
+                await _reply(ctx, sender, final_hash_confirmation(result), end_session=True)
             else:
                 await _reply(ctx, sender, result["message"], end_session=True)
             return
@@ -212,7 +212,7 @@ async def handle_message(ctx: Context, sender: str, msg: ChatMessage):
                     return
                 
                 if result["onchain"]:
-                    await _reply(ctx, sender, final_hash_confirmation(result["proof"]), end_session=True)
+                    await _reply(ctx, sender, final_hash_confirmation(result), end_session=True)
                 else:
                     await _reply(ctx, sender, result["message"], end_session=True)
             else:
@@ -239,6 +239,59 @@ async def handle_message(ctx: Context, sender: str, msg: ChatMessage):
             reason = await asi.explain_verification(docs, json.dumps(verification))
             await _reply(ctx, sender, verification_report(verification, reason), end_session=True)
             return
+
+        if intent.kind == "VERIFY_PROOF_FILE":
+            # print(f"Step 3: Handling VERIFY_PROOF_FILE intent")
+            # print(f"Step 3: Uploaded files count: {len(uploaded_files)}")
+            
+            if not uploaded_files:
+                await _reply(ctx, sender, "❌ No file uploaded. Please upload a proof file to verify.")
+                return
+            
+            # Check if the uploaded file is a valid proof file
+            file_data = uploaded_files[0]
+            # print(f"Step 3: File data keys: {list(file_data.keys())}")
+            # print(f"Step 3: File mime_type: {file_data.get('mime_type')}")
+            # print(f"Step 3: File filename: {file_data.get('filename')}")
+            
+            if not verification_service.is_proof_file(file_data):
+                await _reply(ctx, sender, "❌ The uploaded file is not a valid proof file. Please ensure it's a JSON file with the required structure containing address, data, proof, and root properties.")
+                return
+            
+            # print(f"Step 3: Proof file validation successful, proceeding to verification")
+            
+            # Parse the proof file to extract verification data
+            try:
+                first_proof = verification_service.parse_proof_file(file_data)
+                
+                # print(f"Step 3: Extracted proof data: {first_proof}")
+                
+                # Use the same verification logic as VERIFY_PROOF
+                # print(f"Step 4: Using same verification logic as existing verify function")
+                request_id = f"chat-{sender[:8]}-{int(datetime.now(timezone.utc).timestamp())}"
+                # print(f"first_proof: {first_proof['proof']}")
+                verification = await verification_service.verify(
+                    proof=first_proof["proof"], 
+                    root=first_proof["root"], 
+                    address=first_proof["address"], 
+                    data=first_proof["data"], 
+                    request_id=request_id
+                )
+                
+                if not verification:
+                    await _reply(ctx, sender, "❌ Failed to verify proof from file. Please check your proof file and try again.")
+                    return
+
+                # Ask ASI to produce a human explanation (same as VERIFY_PROOF)
+                # print(f"Step 4: Using same response format as existing verify function")
+                reason = await asi.explain_verification(docs, json.dumps(verification))
+                await _reply(ctx, sender, verification_report(verification, reason), end_session=True)
+                return
+                
+            except Exception as e:
+                print(f"❌ Error processing proof file: {e}")
+                await _reply(ctx, sender, f"❌ Error processing proof file: {str(e)}")
+                return
 
         # GENERAL: forward ASI content as-is (no links mandated by your system prompt)
         await _reply(ctx, sender, intent.raw_response)

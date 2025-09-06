@@ -48,5 +48,20 @@ class IntegritasClient:
             return None
         return r.json()
 
+    async def get_proof_file_link(self, uids: list[str], request_id: str = None) -> Dict[str, Any] | None:
+        """Call the proof file link endpoint to get a downloadable link."""
+        headers = {"Content-Type": "application/json"}
+        if request_id:
+            headers["x-request-id"] = request_id
+            
+        r = await self._client.post(
+            "/v1/timestamp/get-proof-file-link",
+            headers=headers,
+            json={"uids": uids}
+        )
+        if r.status_code != 200:
+            return None
+        return r.json()
+
     async def aclose(self):
         await self._client.aclose()
