@@ -11,6 +11,6 @@ class VerifyIntent(BaseModel):
     proof: str
 
 class IntentResult(BaseModel):
-    kind: str  # "STAMP_HASH" | "VERIFY_PROOF" | "GENERAL" | "HASH_FILE"
+    kind: str  # "STAMP_HASH" | "VERIFY_PROOF" | "VERIFY_PROOF_FILE" | "GENERAL" | "HASH_FILE"
     payload: Dict[str, Any]
     raw_response: str

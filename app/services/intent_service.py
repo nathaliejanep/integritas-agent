@@ -34,5 +34,10 @@ class IntentService:
                 payload = json.loads(raw)
             except Exception:
                 payload = {"_raw": raw, "_error": "Invalid JSON from LLM"}
+
+        elif content.startswith("VERIFY_PROOF_FILE:"):
+            kind = "VERIFY_PROOF_FILE"
+            print(f"Step 2: VERIFY_PROOF_FILE intent detected")
+            payload = {"uploaded_file": True}
       
         return IntentResult(kind=kind, payload=payload, raw_response=content)
