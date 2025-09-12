@@ -90,7 +90,7 @@ async def handle_message(ctx: Context, sender: str, msg: ChatMessage):
                         storage_url=STORAGE_URL,
                     )
                     data = external_storage.download(str(item.resource_id)) # Download the file from the agentverse storage
-                    print(f"data: {data}")
+                    # print(f"data: {data}")
                     # Collect metadata for the file
                     uploaded_files.append({
                         "type": "resource", 
@@ -98,7 +98,7 @@ async def handle_message(ctx: Context, sender: str, msg: ChatMessage):
                         "contents": data["contents"], # file contents (bytes or string)
                         "filename": data.get("filename", "uploaded_file"),  # Extract filename
                     })
-                    print(f"uploaded_files: {uploaded_files}")
+                    # print(f"uploaded_files: {uploaded_files}")
                     ctx.logger.info(f"Downloaded file: {data.get('filename', 'uploaded_file')}")
 
                 except Exception as e:

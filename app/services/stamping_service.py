@@ -95,13 +95,14 @@ class StampingService:
             
             try:
                 proof_file_result = await self.integ.get_proof_file_link([uid], request_id)
-                
+          
                 if proof_file_result["status"] == "success":
+              
                     # Extract the download link and file info
-                    data = proof_file_result["data"]
-                    download_link = data.get("downloadUrl")
-                    filename = data.get("filename")
-                    print(f"Download link: {download_link}")
+                    data = proof_file_result["data"]    
+                    download_link = data["proof_file"]["download_url"]
+                    filename = data["proof_file"]["file_name"]
+                    
                     return {
                         "success": True,
                         "message": f"✅ Hash stamped successfully and on-chain!\n\n**UID:** {uid}\n**Proof File:** {filename}\n**Download Link:** {download_link}",

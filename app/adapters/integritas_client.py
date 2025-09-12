@@ -40,8 +40,8 @@ class IntegritasClient:
         bytes_data = json.dumps(items).encode("utf-8")
         files = {"file": ("proof_data.json", io.BytesIO(bytes_data), "application/json")}
         r = await self._client.post(
-            "/v1/verify/post-lite",
-            headers={"x-request-id": request_id, "x-report-required": "true"},
+            "/v1/verify/post-lite-pdf",
+            headers={"x-request-id": request_id, "x-report-required": "true", "x-return-format": "link"},
             files=files
         )
         if r.status_code != 200:

@@ -52,32 +52,37 @@ def final_hash_confirmation(result: dict) -> str:
 
 def verification_report(verification_result: dict, ai_reasoning: str) -> str:
     try:
-        result = verification_result["data"]["response"]["data"]["result"]
+        result = verification_result["data"]["verification"]["data"]["result"]
     except Exception:
         # fall back to a compact dump
         return f"Verification result:\n```json\n{json.dumps(verification_result, indent=2)}\n```\n\n{ai_reasoning}"
 
     if result == "full match":
-        bd = verification_result["data"]["response"]["data"]["blockchain_data"][0]
-        date = bd["block_date"]
-        block_number = bd["block_number"]
-        txpow_id = bd["txpow_id"]
-        transaction_id = bd["transactionid"]
-        txnid = verification_result["data"]["response"]["nfttxnid"]
+        date = verification_result["timestamp"]
+        # block_number = bd["block_number"]
+        # txpow_id = bd["txpow_id"]
+        # transaction_id = bd["transactionid"]
+        # txnid = verification_result["data"]["verification"]["data"]["nfttxnid"]
+        download_link = verification_result["data"]["file"]["download_url"]
 
         # No links per your prompt policy—just show ids
         table = (
             "## Verification Report\n\n"
             "|  |  |\n|---|---|\n"
             f"| **Result** | {result} |\n"
-            f"| **Date** | {date} UTC |\n"
-            f"| **Block** | [{block_number}  ↗](https://explorer.minima.global/blocks/{txpow_id})|\n"
-            f"| **Txn ID** | [{shorten_string(transaction_id)}  ↗](https://explorer.minima.global/transactions/{transaction_id}) |\n"
-            f"| **NFT Proof** | [{shorten_string(txnid)}  ↗](https://explorer.minima.global/transactions/{txnid}) |\n"
+            f"| **Verification Date** | {date} UTC |\n"
+            # f"| **Blocks** | [{block_number}  ↗](https://explorer.minima.global/blocks/{txpow_id})|\n"
+            # f"| **Txn ID** | [{shorten_string(transaction_id)}  ↗](https://explorer.minima.global/transactions/{transaction_id}) |\n"
+            # f"| **NFT Proof** | [{shorten_string(txnid)}  ↗](https://explorer.minima.global/transactions/{txnid}) |\n"
         )
         return (
             "🎉 Proof Verified!\n\nYour proof has been successfully verified.\n\n"
             f"{table}\n\n"
+            f"**Report File Available for Download**\n\n"
+            f"**Download Link:**  [Report File ↗]({download_link})\n\n"
+            "💡 **Note:** \n\n"
+            "• This download link is valid for 1 hour and can be shared with others.\n\n"
+            
             "## Intelligent analysis\n\n"
             "(AI can make mistakes. Check important info.)\n\n---\n"
             f"{ai_reasoning}\n\n---\n"

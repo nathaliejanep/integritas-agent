@@ -24,12 +24,13 @@ class HashingService:
         """
         # Log the content being hashed
         try:
-            print(f"----> Hash content: {content}")
+            # print(f"----> Hash content: {content}")
             content_str = content.decode('utf-8')
-            print(f"Content to hash: '{content_str}'")
+            # print(f"Content to hash: '{content_str}'")
         except UnicodeDecodeError:
-            print(f"Content to hash (raw bytes): {content}")
-        
+            # print(f"Content to hash (raw bytes): {content}")
+            print(f"UnicodeDecodeError")
+
         print(f"Using SHA3-256 hashing algorithm")
         sha3_256 = hashlib.sha3_256()
         sha3_256.update(content)
@@ -55,8 +56,8 @@ class HashingService:
         filename = file_data["filename"]
         
         # Log the raw file contents to see what we're getting
-        print(f"Raw file contents type: {type(file_contents)}")
-        print(f"Raw file contents: '{file_contents}'")
+        # print(f"Raw file contents type: {type(file_contents)}")
+        # print(f"Raw file contents: '{file_contents}'")
         
         # Convert to bytes if it's a string
         if isinstance(file_contents, str):
@@ -64,7 +65,7 @@ class HashingService:
             try:
                 # Try to decode base64 first
                 decoded_content = base64.b64decode(file_contents)
-                print(f"Base64 decoded content: {decoded_content}")
+                # print(f"Base64 decoded content: {decoded_content}")
                 file_contents = decoded_content
             except Exception as e:
                 print(f"Not base64 encoded, treating as UTF-8: {e}")
