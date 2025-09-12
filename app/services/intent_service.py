@@ -11,19 +11,19 @@ class IntentService:
         kind = "GENERAL"
         payload = {}
         # TODO: Remove file path, add try catch
-        if content.startswith("HASH_FILE:"):
-            kind = "HASH_FILE"
-            file_path = content.split("HASH_FILE:", 1)[1].strip()
-            if file_path:
-                payload={"file_path": file_path}
-            else:
-                payload = {"uploaded_file": True}
+        # if content.startswith("HASH_FILE:"):
+        #     kind = "HASH_FILE"
+        #     file_path = content.split("HASH_FILE:", 1)[1].strip()
+        #     if file_path:
+        #         payload={"file_path": file_path}
+        #     else:
+        #         payload = {"uploaded_file": True}
 
-        elif content.startswith("STAMP_HASH:"):
-            kind = "STAMP_HASH"
-            payload = {"hash": content.split("STAMP_HASH:", 1)[1].strip()}
+        # elif content.startswith("STAMP_HASH:"):
+        #     kind = "STAMP_HASH"
+        #     payload = {"hash": content.split("STAMP_HASH:", 1)[1].strip()}
 
-        elif content.startswith("STAMP_FILE:"):
+        if content.startswith("STAMP_FILE:"):
             kind = "STAMP_FILE"
             payload = {"uploaded_file": True}
 

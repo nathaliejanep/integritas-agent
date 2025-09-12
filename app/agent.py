@@ -115,80 +115,37 @@ async def handle_message(ctx: Context, sender: str, msg: ChatMessage):
         intent = await intent_service.detect(enhanced_text)
         ctx.logger.info(f"Intent: {intent.kind}, payload: {intent.payload}")
 
-        if intent.kind == "STAMP_HASH":
-            # OLD CODE - COMMENTED OUT
-            # hash_value = intent.payload.get("hash", "")
-            # if len(hash_value) < 32:
-            #     await _reply(ctx, sender, "The provided value doesn't look like a valid hash.")
-            #     return
-
-            # request_id = f"chat-{sender[:8]}-{int(datetime.now(timezone.utc).timestamp())}"
-            # uid = await stamping_service.stamp(hash_value, request_id)
-            # if not uid:
-            #     await _reply(ctx, sender, "❌ Failed to stamp hash. Please check the hash and try again.")
-            #     return
-
-            # await _reply(ctx, sender, f"✅ Hash stamped successfully!\n\n**UID:** {uid}\n\nChecking on‑chain confirmation...")
-
-            # onchain = await stamping_service.wait_for_onchain(uid)
-            # if onchain["onchain"]:
-            #     proof = {
-            #         "proof": onchain["proof"],
-            #         "address": onchain["address"],
-            #         "root": onchain["root"],
-            #         "data": onchain["data"],
-            #     }
-            #     await _reply(ctx, sender, final_hash_confirmation(proof), end_session=True)
-            # else:
-            #     await _reply(ctx, sender, f"⏳ Status Update\n\n**UID:** {uid}\nStill waiting for blockchain confirmation.", end_session=True)
-            # return
-
-            # NEW CODE - Using reusable stamp_hash function
-            hash_value = intent.payload.get("hash", "")
+        # if intent.kind == "STAMP_HASH":
+        #     hash_value = intent.payload.get("hash", "")
             
-            # Create status callback function to get status updates
-            async def status_callback(message):
-                await _reply(ctx, sender, message)
+        #     # Create status callback function to get status updates
+        #     async def status_callback(message):
+        #         await _reply(ctx, sender, message)
             
-            result = await stamping_service.stamp_hash(hash_value, sender, status_callback=status_callback)
+        #     result = await stamping_service.stamp_hash(hash_value, sender, status_callback=status_callback)
             
-            if not result["success"]:
-                await _reply(ctx, sender, result["message"])
-                return
+        #     if not result["success"]:
+        #         await _reply(ctx, sender, result["message"])
+        #         return
             
-            if result["onchain"]:
-                await _reply(ctx, sender, final_hash_confirmation(result), end_session=True)
-            else:
-                await _reply(ctx, sender, result["message"], end_session=True)
-            return
+        #     if result["onchain"]:
+        #         await _reply(ctx, sender, final_hash_confirmation(result), end_session=True)
+        #     else:
+        #         await _reply(ctx, sender, result["message"], end_session=True)
+        #     return
 
-                # TODO: Improve this, by checking if not a proof file
-
-        if intent.kind == "HASH_FILE":
-            if uploaded_files:
-                # Hash uploaded file using the reusable service method
-                file_data = uploaded_files[0]
-                hash_record = hashing_service.hash_uploaded_file(file_data)
+        # if intent.kind == "HASH_FILE":
+        #     if uploaded_files:
+        #         # Hash uploaded file using the reusable service method
+        #         file_data = uploaded_files[0]
+        #         hash_record = hashing_service.hash_uploaded_file(file_data)
                 
-                # Store the hash result in storage
-                ctx.storage.set(f"hash_{hash_record['file_id']}", hash_record)
+        #         # Store the hash result in storage
+        #         ctx.storage.set(f"hash_{hash_record['file_id']}", hash_record)
                 
-                await _reply(ctx, sender, f"✅ File hashed successfully!\n\n**Filename:** {hash_record['filename']}\n**Hash:** {hash_record['hash']}\n\nWould you like me to stamp this hash on the blockchain?")
-            # else:
-            #     # Check if file path was provided in intent
-            #     file_path = intent.payload.get("file_path")
-            #     if file_path:
-            #         # Hash file from path
-            #         ctx.logger.info(f"Attempting to hash file from path: {file_path}")
-            #         hash_value = await hashing_service.hash_file(file_path)
-            #         if hash_value:
-            #             await _reply(ctx, sender, f"✅ File hashed successfully!\n\n**File:** {file_path}\n**Hash:** {hash_value}")
-            #         else:
-            #             await _reply(ctx, sender, f"❌ Could not hash file: {file_path}\n\nThis might be because:\n• The file doesn't exist at that location\n• The file path is not accessible from this agent\n• You don't have permission to read the file\n\n💡 **Tip:** For better reliability, try uploading the file directly instead of providing a file path. This works regardless of where the file is located on your system.\n\n📁 **Note:** If you want to use file paths, try using relative paths (like 'test_file.txt') instead of absolute paths.")
-            #     else:
-            #         # No file uploaded and no file path provided
-            #         await _reply(ctx, sender, "I'd be happy to help you hash a file! Please upload a file or provide the file path so I can generate the hash for you.\n\n💡 **Recommended:** Upload the file directly for the most reliable experience.")
-            return
+        #         await _reply(ctx, sender, f"✅ File hashed successfully!\n\n**Filename:** {hash_record['filename']}\n**Hash:** {hash_record['hash']}\n\nWould you like me to stamp this hash on the blockchain?")
+        #     return
+        
         if intent.kind == "STAMP_FILE":
             if uploaded_files:
                 # First hash the uploaded file

@@ -42,7 +42,7 @@ def final_hash_confirmation(result: dict) -> str:
     if download_link:
         message += (
             "\n **Proof File Available for Download**\n\n"
-            f"**Download Link:**  [Proof File ↗]({download_link})\n\n"
+            f"**Download Link:**  [Proof File ↓]({download_link})\n\n"
             "💡 **Note:** \n\n"
             "• This download link is valid for 1 hour and can be shared with others.\n\n"
             "• Click on the link, right click and save as to download the file.\n"
@@ -78,10 +78,10 @@ def verification_report(verification_result: dict, ai_reasoning: str) -> str:
         return (
             "🎉 Proof Verified!\n\nYour proof has been successfully verified.\n\n"
             f"{table}\n\n"
-            f"**Report File Available for Download**\n\n"
-            f"**Download Link:**  [Report File ↗]({download_link})\n\n"
+            f"### Full Verification Report \n\n"
+            f"**Download Link:**  [Report File ↓]({download_link})\n\n"
             "💡 **Note:** \n\n"
-            "• This download link is valid for 1 hour and can be shared with others.\n\n"
+            "• This download link is valid for 1 hour and can be shared with others.\n\n---\n"
             
             "## Intelligent analysis\n\n"
             "(AI can make mistakes. Check important info.)\n\n---\n"
