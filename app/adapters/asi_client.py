@@ -42,6 +42,7 @@ class ASIClient:
                 - Include no external links or references
 
                 IMPORTANT: If any information is not explicitly stated in the verification results, do not include it in your response. Stick strictly to the facts provided.
+                IMPORTANT: Use only the JSON data from the API response. Do not analyze or base your answers on the PDF file. Stick strictly to the facts provided.
             """},
             {"role":"user","content": f"Based on these verification results: {docs}\n\nPlease explain: {reason_payload}\n\nIMPORTANT: Only use information from the verification results above. Do not make up or assume any information."}
         ]
