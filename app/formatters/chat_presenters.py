@@ -45,7 +45,6 @@ def final_hash_confirmation(result: dict) -> str:
             f"**Download Link:**  [Proof File ↓]({download_link})\n\n"
             "💡 **Note:** \n\n"
             "• This download link is valid for 1 hour and can be shared with others.\n\n"
-            "• Click on the link, right click and save as to download the file.\n"
         )
 
     return message
