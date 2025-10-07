@@ -36,8 +36,8 @@ class ASIClient:
                 Your response should:
                 - Summarize the verification results in natural language
                 - Highlight the on-chain date if available, always use the date from the verification result and never make up a date
-                - Be structured with 3-4 clear sections
-                - Use short, descriptive headings
+                - Be structured with 2-3 clear sections
+                - Each section should be a single sentence.
                 - Be polite, concise, and factual
                 - Include no external links or references
 

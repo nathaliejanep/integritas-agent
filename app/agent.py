@@ -114,25 +114,25 @@ async def handle_message(ctx: Context, sender: str, msg: ChatMessage):
 
         intent = await intent_service.detect(enhanced_text)
         ctx.logger.info(f"Intent: {intent.kind}, payload: {intent.payload}")
-
-        # if intent.kind == "STAMP_HASH":
-        #     hash_value = intent.payload.get("hash", "")
+        print(f"Intent: {intent.kind}, payload: {intent.payload}")
+        if intent.kind == "STAMP_HASH":
+            hash_value = intent.payload.get("hash", "")
             
-        #     # Create status callback function to get status updates
-        #     async def status_callback(message):
-        #         await _reply(ctx, sender, message)
+            # Create status callback function to get status updates
+            async def status_callback(message):
+                await _reply(ctx, sender, message)
             
-        #     result = await stamping_service.stamp_hash(hash_value, sender, status_callback=status_callback)
+            result = await stamping_service.stamp_hash(hash_value, sender, status_callback=status_callback)
             
-        #     if not result["success"]:
-        #         await _reply(ctx, sender, result["message"])
-        #         return
+            if not result["success"]:
+                await _reply(ctx, sender, result["message"])
+                return
             
-        #     if result["onchain"]:
-        #         await _reply(ctx, sender, final_hash_confirmation(result), end_session=True)
-        #     else:
-        #         await _reply(ctx, sender, result["message"], end_session=True)
-        #     return
+            if result["onchain"]:
+                await _reply(ctx, sender, final_hash_confirmation(result), end_session=True)
+            else:
+                await _reply(ctx, sender, result["message"], end_session=True)
+            return
 
         # if intent.kind == "HASH_FILE":
         #     if uploaded_files:
@@ -177,14 +177,16 @@ async def handle_message(ctx: Context, sender: str, msg: ChatMessage):
             return
 
         if intent.kind == "VERIFY_PROOF":
+            #proof data is in the payload
             pd = intent.payload
+
             # Basic validation
             missing = [k for k in ("data", "root", "address", "proof") if k not in pd]
             if missing:
                 await _reply(ctx, sender, f"Missing keys in JSON: {', '.join(missing)}.")
                 return
 
-            request_id = f"chat-{sender[:8]}-{int(datetime.now(timezone.utc).timestamp())}"
+            request_id = f"asi-agent-{sender[:8]}-{int(datetime.now(timezone.utc).timestamp())}"
             verification = await verification_service.verify(
                 proof=pd["proof"], root=pd["root"], address=pd["address"], data=pd["data"], request_id=request_id
             )
@@ -225,7 +227,7 @@ async def handle_message(ctx: Context, sender: str, msg: ChatMessage):
                 
                 # Use the same verification logic as VERIFY_PROOF
                 # print(f"Step 4: Using same verification logic as existing verify function")
-                request_id = f"chat-{sender[:8]}-{int(datetime.now(timezone.utc).timestamp())}"
+                request_id = f"asi-agent-{sender[:8]}-{int(datetime.now(timezone.utc).timestamp())}"
                 # print(f"first_proof: {first_proof['proof']}")
                 verification = await verification_service.verify(
                     proof=first_proof["proof"], 
