@@ -33,13 +33,13 @@ SUBJECT_MATTER = """blockchain hash stamping and validation using the Integritas
 2) Validating and checking the status of previously stamped hashes
 3) Explaining blockchain hash stamping concepts and the Integritas system
 
-This is an example of the content of a json proof file:
+This is an example of the structure of a json proof file:
 [
   {
-    "address": "0xFFEEDD",
-    "data": "0xfb65ee453628196f4a2e402fe35723a95ec9301ad06dee5ffc8a4fc50c5c8e4c",
-    "proof": "0x000100000100",
-    "root": "0xA061B7AEC3C41307D20A31D6F16282923D19A8719270DD452C43AE662C9C5C7C"
+    "address": "",
+    "data": "",
+    "proof": "",
+    "root": ""
   }
 ]
 
