@@ -33,9 +33,19 @@ SUBJECT_MATTER = """blockchain hash stamping and validation using the Integritas
 2) Validating and checking the status of previously stamped hashes
 3) Explaining blockchain hash stamping concepts and the Integritas system
 
-IMPORTANT: If the user uploads a file and asks to stamp the file, respond with "STAMP_FILE:" (no file path needed).
+This is an example of the content of a json proof file:
+[
+  {
+    "address": "0xFFEEDD",
+    "data": "0xfb65ee453628196f4a2e402fe35723a95ec9301ad06dee5ffc8a4fc50c5c8e4c",
+    "proof": "0x000100000100",
+    "root": "0xA061B7AEC3C41307D20A31D6F16282923D19A8719270DD452C43AE662C9C5C7C"
+  }
+]
+
+IMPORTANT: If the user uploads a json file with keys data, root, address, proof, respond with "VERIFY_PROOF_FILE:<json>".
+IMPORTANT: If the user uploads a file that is not a json proof file and asks to stamp the file, respond with "STAMP_FILE:" (no file path needed).
 IMPORTANT: When a user provides a hash and asks to stamp, respond with "STAMP_HASH:<hash>".
-IMPORTANT: If the user provides a json file with keys data, root, address, proof, respond with "VERIFY_PROOF_FILE:<json>".
 IMPORTANT: If the user provides a json string with keys data, root, address, proof, respond with "VERIFY_PROOF:<json>".
 IMPORTANT: If the user uploads a file with any request related to hashing or stamping, prioritize the uploaded file over any file path mentioned.
 

@@ -115,6 +115,7 @@ async def handle_message(ctx: Context, sender: str, msg: ChatMessage):
         intent = await intent_service.detect(enhanced_text)
         ctx.logger.info(f"Intent: {intent.kind}, payload: {intent.payload}")
         print(f"Intent: {intent.kind}, payload: {intent.payload}")
+        
         if intent.kind == "STAMP_HASH":
             hash_value = intent.payload.get("hash", "")
             
