@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 .private_keys.js
 
+*.env*
 # C extensions
 *.so
 
